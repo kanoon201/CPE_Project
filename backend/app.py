@@ -4,7 +4,7 @@ import mysql.connector
 
 app = Flask(__name__)
 
-# --- Database Initialization ---
+# --- Database Initialization test1234567879 ---
 def init_mysql_db():
     conn = get_mysql_connection()
     if conn:
