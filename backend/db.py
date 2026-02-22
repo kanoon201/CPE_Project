@@ -3,6 +3,8 @@ import mysql.connector
 from pymongo import MongoClient
 import redis
 
+
+# MySQL Connection
 def get_mysql_connection():
     try:
         connection = mysql.connector.connect(
