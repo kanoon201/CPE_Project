@@ -5,6 +5,8 @@ import redis
 
 
 # MySQL Connection
+# Note: In a production environment, consider using connection pooling for better performance.
+#query = "SELECT * FROM User"
 def get_mysql_connection():
     try:
         connection = mysql.connector.connect(
