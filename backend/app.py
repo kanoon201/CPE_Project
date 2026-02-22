@@ -4,6 +4,8 @@ import mysql.connector
 
 app = Flask(__name__)
 
+
+#qwertyuiop
 # - Database Initialization aaa
 def init_mysql_db():
     conn = get_mysql_connection()
