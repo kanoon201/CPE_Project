@@ -1,8 +1,12 @@
-from flask import Flask, jsonify, request, render_template
-from db import get_mysql_connection, get_mongo_collection, get_redis_client
+from flask import Flask, jsonify, request, render_template, redirect
+from db import get_mysql_connection, get_mongo_collection
 import mysql.connector
 
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    template_folder = "../frontend/template",
+    static_folder = "../frontend/static"
+)
 
 # --- Frontend Route ---
 @app.route('/')
