@@ -34,7 +34,7 @@
     <h2>Unlock the full experience</h2>
     <p>Create an account to compete and climb the leaderboard.</p>
   </div>
-  <button onclick="loginAlert()">Log in to play</button>
+  <button onclick="window.location.href='/login'">Log in to play</button>
 </div>
 
 <div class="match-section">
@@ -73,9 +73,6 @@
 </div>
 
 <script>
-function loginAlert(){
-  alert("Login feature coming soon!");
-}
 
 function submitPrediction(){
   let s1=document.getElementById('s1').value;
