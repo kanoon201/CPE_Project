@@ -4,67 +4,82 @@ import mysql.connector
 
 app = Flask(__name__)
 
+# --- Frontend Route ---
+@app.route('/')
+def index():
+    return render_template('index.html')
 
-#qwertyuiopadadadadadaaadadadadadada
-# - Database Initialization aaa
-def init_mysql_db():
-    conn = get_mysql_connection()
-    if conn:
-        cursor = conn.cursor()
+# --- Register Route ---
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
 
-        # ---------------- USER ----------------
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS User (
-                User_id INT AUTO_INCREMENT PRIMARY KEY,
-                Username VARCHAR(100) NOT NULL UNIQUE,
-                Password VARCHAR(255) NOT NULL
-            )
-        """)
+        conn = get_mysql_connection()
+        cursor = conn.cursor(dictionary=True)
 
-        # ---------------- TEAM ----------------
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS Team (
-                Team_id INT AUTO_INCREMENT PRIMARY KEY,
-                Teamname VARCHAR(100) NOT NULL,
-                Shortname VARCHAR(20) NOT NULL UNIQUE,
-                Region VARCHAR(100)
-            )
-        """)
+        # check user exists
+        cursor.execute(
+            "SELECT * FROM User WHERE Username = %s",
+            (username,)
+        )
 
-        # ---------------- LEADERBOARD ----------------
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS LeaderBoard (
-                User_id INT PRIMARY KEY,
-                Username VARCHAR(100) NOT NULL,
-                Score INT DEFAULT 0,
-                Ranking INT DEFAULT NULL,
-                FOREIGN KEY (User_id) REFERENCES User(User_id)
-                    ON DELETE CASCADE
-            )
-        """)
+        existing = cursor.fetchone()
 
-        # ---------------- PICKEM_DATA ----------------
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS Pickem_DATA (
-                Pickem_id INT AUTO_INCREMENT PRIMARY KEY,
-                Match_id VARCHAR(50) NOT NULL,
-                User_id INT NOT NULL,
-                Predict_Winner VARCHAR(20),
-                Predict_Score VARCHAR(20),
-                FOREIGN KEY (User_id) REFERENCES User(User_id)
-                    ON DELETE CASCADE
-            )
-        """)
+        if existing:
+            return "Username already exists"
+
+        # insert new user
+        cursor.execute(
+            "INSERT INTO User (Username, Password) VALUES (%s, %s)",
+            (username, password)
+        )
 
         conn.commit()
+
         cursor.close()
         conn.close()
-        print("All MySQL tables initialized successfully.")
 
-if __name__ == '__main__':
-    try:
-        init_mysql_db()
-    except Exception as e:
-        print(f"Warning: DB init failed: {e}")
+        return redirect(url_for('login'))
 
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    return render_template('register.html')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
