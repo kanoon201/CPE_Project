@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Valorant Predict</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+<div class="navbar">
+  <div class="logo">PICKEM</div>
+  <div class="nav-links">
+    <span>Matches</span>
+    <span>Tournament</span>
+    <span>Leaderboard</span>
+    <span>Teams</span>
+    <span>Profile</span>
+  </div>
+</div>
+
+<div class="header">
+  <h1>Predict</h1>
+  <div class="tabs">
+    <span class="active">Predictions</span>
+    <span>Leagues</span>
+    <span>Prizes</span>
+    <span>Rules</span>
+  </div>
+</div>
+
+<div class="login-box">
+  <div>
+    <h2>Unlock the full experience</h2>
+    <p>Create an account to compete and climb the leaderboard.</p>
+  </div>
+  <button onclick="window.location.href='/login'">Log in to play</button>
+</div>
+
+<div class="match-section">
+  <h2>25 - 26 March</h2>
+
+  <div class="match-card">
+    <div class="match-top">
+      <div class="teams">
+        <span>Sentinels</span>
+        <div class="score-box">
+          <input type="number" id="s1" min="0">
+          <input type="number" id="s2" min="0">
+        </div>
+        <span>Fnatic</span>
+      </div>
+    </div>
+    <button class="submit-btn" onclick="submitPrediction()">Submit Prediction</button>
+    <div class="result" id="result"></div>
+  </div>
+
+  <div class="match-card">
+    <div class="match-top">
+      <div class="teams">
+        <span>Paper Rex</span>
+        <div class="score-box">
+          <input type="number" id="s3" min="0">
+          <input type="number" id="s4" min="0">
+        </div>
+        <span>LOUD</span>
+      </div>
+    </div>
+    <button class="submit-btn" onclick="submitPrediction2()">Submit Prediction</button>
+    <div class="result" id="result2"></div>
+  </div>
+
+</div>
+
+<script>
+
+function submitPrediction(){
+  let s1=document.getElementById('s1').value;
+  let s2=document.getElementById('s2').value;
+  if(s1===""||s2===""){
+    document.getElementById('result').innerText="Please enter both scores.";
+  }else{
+    document.getElementById('result').innerText="Prediction Submitted: "+s1+" - "+s2;
+  }
+}
+
+function submitPrediction2(){
+  let s3=document.getElementById('s3').value;
+  let s4=document.getElementById('s4').value;
+  if(s3===""||s4===""){
+    document.getElementById('result2').innerText="Please enter both scores.";
+  }else{
+    document.getElementById('result2').innerText="Prediction Submitted: "+s3+" - "+s4;
+  }
+}
+</script>
+
+</body>
+</html>

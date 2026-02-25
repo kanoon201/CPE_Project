@@ -1,0 +1,180 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Orbitron',sans-serif;
+  }
+  
+  body{
+    background:#0b0b0b;
+    color:white;
+  }
+  
+  /* NAVBAR */
+  .navbar{
+    background:linear-gradient(90deg,#8b0000,#000);
+    padding:20px 60px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    box-shadow:0 0 20px #ff000044;
+  }
+  
+  .logo{
+    font-size:24px;
+    font-weight:700;
+    color:#ff2a2a;
+    letter-spacing:2px;
+  }
+  
+  .nav-links{
+    display:flex;
+    gap:30px;
+    font-size:14px;
+  }
+  
+  .nav-links span{
+    cursor:pointer;
+    transition:0.3s;
+  }
+  
+  .nav-links span:hover{
+    color:#ff2a2a;
+  }
+  
+  /* HEADER */
+  .header{
+    padding:60px;
+  }
+  
+  .header h1{
+    font-size:40px;
+    color:#ff2a2a;
+    margin-bottom:10px;
+  }
+  
+  .tabs{
+    display:flex;
+    gap:30px;
+    margin-top:20px;
+  }
+  
+  .tabs span{
+    cursor:pointer;
+    padding-bottom:5px;
+  }
+  
+  .tabs span.active{
+    border-bottom:3px solid #ff2a2a;
+    color:#ff2a2a;
+  }
+  
+  /* LOGIN BOX */
+  .login-box{
+    margin:40px 60px;
+    padding:40px;
+    background:linear-gradient(135deg,#1a0000,#000);
+    border:1px solid #ff2a2a;
+    border-radius:20px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  
+  .login-box h2{
+    font-size:22px;
+    margin-bottom:10px;
+  }
+  
+  .login-box button{
+    background:#ff2a2a;
+    border:none;
+    padding:12px 25px;
+    border-radius:30px;
+    cursor:pointer;
+    font-weight:600;
+    transition:0.3s;
+  }
+  
+  .login-box button:hover{
+    background:white;
+    color:#ff2a2a;
+  }
+  
+  /* MATCH SECTION */
+  .match-section{
+    padding:20px 60px 60px 60px;
+  }
+  
+  .match-section h2{
+    margin-bottom:30px;
+  }
+  
+  .match-card{
+    background:linear-gradient(135deg,#1a0000,#000);
+    border:1px solid #ff2a2a;
+    border-radius:20px;
+    padding:30px;
+    margin-bottom:30px;
+    box-shadow:0 0 20px #ff000033;
+  }
+  
+  .match-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  
+  .teams{
+    display:flex;
+    align-items:center;
+    gap:20px;
+    font-size:20px;
+  }
+  
+  .score-box{
+    display:flex;
+    gap:10px;
+  }
+  
+  .score-box input{
+    width:60px;
+    height:50px;
+    background:#000;
+    border:2px solid #ff2a2a;
+    color:white;
+    text-align:center;
+    font-size:20px;
+    border-radius:10px;
+  }
+  
+  .submit-btn{
+    margin-top:20px;
+    background:#ff2a2a;
+    padding:10px 20px;
+    border:none;
+    border-radius:20px;
+    cursor:pointer;
+    transition:0.3s;
+  }
+  
+  .submit-btn:hover{
+    background:white;
+    color:#ff2a2a;
+  }
+  
+  .result{
+    margin-top:15px;
+    color:#ff2a2a;
+  }
+  
+  @media(max-width:768px){
+    .login-box{
+      flex-direction:column;
+      gap:20px;
+      text-align:center;
+    }
+    .teams{
+      flex-direction:column;
+    }
+  }
