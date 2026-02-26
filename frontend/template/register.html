@@ -8,7 +8,17 @@
 
     <div class="login-card">
         <h2>Register</h2>
-    
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert {{ category }}">
+            {{ message }}
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
         <form method="POST">
             <input type="text" name="username" placeholder="Choose Username" required>
             <input type="password" name="password" placeholder="Create Password" required>

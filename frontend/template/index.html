@@ -15,7 +15,13 @@
     <span>Tournament</span>
     <span>Leaderboard</span>
     <span>Teams</span>
-    <span>Profile</span>
+    
+    {% if logged_in %}
+        <span class="user-name">{{ session['username'] }}</span>
+        <a href="/logout" class="logout-link">Log out</a>
+    {% else %}
+        <span>Profile</span>
+    {% endif %}
   </div>
 </div>
 
@@ -29,6 +35,8 @@
   </div>
 </div>
 
+
+{% if not logged_in %}
 <div class="login-box">
   <div>
     <h2>Unlock the full experience</h2>
@@ -36,6 +44,8 @@
   </div>
   <button onclick="window.location.href='/login'">Log in to play</button>
 </div>
+{% endif %}
+
 
 <div class="match-section">
   <h2>25 - 26 March</h2>
@@ -45,13 +55,17 @@
       <div class="teams">
         <span>Sentinels</span>
         <div class="score-box">
-          <input type="number" id="s1" min="0">
-          <input type="number" id="s2" min="0">
+          <input type="number" id="s1" min="0" {% if not logged_in %} readonly placeholder="-" {% endif %}>
+          <input type="number" id="s2" min="0" {% if not logged_in %} readonly placeholder="-" {% endif %}>
         </div>
         <span>Fnatic</span>
       </div>
     </div>
-    <button class="submit-btn" onclick="submitPrediction()">Submit Prediction</button>
+    {% if logged_in %}
+      <button class="submit-btn" onclick="submitPrediction()">Submit Prediction</button>
+    {% else %}
+      <p class="login-warning">Please login to play</p>
+    {% endif %}
     <div class="result" id="result"></div>
   </div>
 

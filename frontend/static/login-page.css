@@ -4,11 +4,16 @@
     box-sizing: border-box;
 }
 
+
 body {
-    font-family: 'Inter', sans-serif;
-    background: #111;
-    color: #fff;
-    height: 100vh;
+    background: #0b0b0b;
+    color: white;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Orbitron', sans-serif;
+    
+    min-height: 100vh; 
     display: flex;
     justify-content: center;
     align-items: center;
@@ -25,12 +30,70 @@ body {
 }
 
 /* Title */
+
 .login-card h2 {
     text-align: center;
     margin-bottom: 20px;
     font-weight: 600;
     letter-spacing: 1px;
 }
+
+.logout-link {
+    color: #ff4444;
+    text-decoration: none;
+    font-size: 14px;
+    margin-left: 10px;
+    border: 1px solid #ff4444;
+    padding: 2px 8px;
+    border-radius: 4px;
+    transition: 0.3s;
+}
+
+.logout-link:hover {
+    background-color: #ff4444;
+    color: white;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.user-name {
+    color: #ff2a2a;
+    font-weight: bold;
+}
+
+/* alert */
+
+.alert {
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 14px;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid transparent;
+}
+
+.alert.error {
+    color: #ff4655 !important; /* บังคับให้เป็นสีแดงสว่างแบบ Valorant */
+    background: rgba(255, 70, 85, 0.15); /* เพิ่มความเข้มพื้นหลังเล็กน้อย */
+    border: 1px solid #ff4655;
+    animation: shake 0.4s ease-in-out;
+}
+
+.alert.success {
+    color: #00ff88 !important; /* บังคับให้เป็นสีเขียวนีออนสว่างๆ */
+    background: rgba(0, 255, 136, 0.15);
+    border: 1px solid #00ff88;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
 
 /* Form */
 form {
