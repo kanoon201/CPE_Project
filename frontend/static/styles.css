@@ -196,3 +196,98 @@
       flex-direction:column;
     }
   }
+
+
+/* TEAM SECTION */
+  .team-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+
+.team-card {
+  border: 1px solid red;
+  border-radius: 12px;
+  padding: 16px;
+  background: linear-gradient(135deg, #1a0000, #000);
+  color: white;
+}
+
+.team-card h2 {
+  margin-bottom: 8px;
+  color: #ff3b3b;
+}
+
+/* TEAM TABLE – RED BACKGROUND / BLACK TEXT */
+.team-table {
+  width: 95%;
+  margin: 1px auto;   /* ⬆️ ขยับขึ้น */
+  border-collapse: collapse;
+  background-color: #ff2a2a;   /* 🔴 พื้นหลังแดง */
+  color: #000;                 /* ⚫ ข้อความดำ */
+  border: 2px solid #000;
+}
+
+.team-table th,
+.team-table td {
+  border: 1px solid #000;      /* เส้นตารางสีดำ */
+  padding: 12px;
+  text-align: center;
+}
+
+/* หัวตาราง */
+.team-table th {
+  background-color: #b80000;   /* 🔴 แดงเข้ม */
+  color: #000;                 /* ⚫ ตัวอักษรดำ */
+  font-weight: bold;
+}
+
+/* แถวสลับสี */
+.team-table tr:nth-child(even) {
+  background-color: #ff4d4d;   /* 🔴 แดงอ่อน */
+}
+
+/* hover */
+.team-table tr:hover {
+  background-color: #ff6b6b;
+}
+
+.logo-box {
+  background: #606060;
+  padding: 6px;
+  border-radius: 10px;
+  width: 52px;
+  height: 52px;
+
+  border: 1px solid rgba(255,255,255,0.15); /* เพิ่มเส้นบาง */
+}
+
+/* โลโก้ */
+.team-logo {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+/* hover เพิ่มความรู้สึก interactive */
+.team-table tr:hover .logo-box {
+  box-shadow: 0 0 12px rgba(0,0,0,0.9);
+}
+
+.team-table tbody tr:first-child {
+  background-color: #d10000; /* แดงเข้มกว่า */
+  font-weight: bold;
+}
+
+/* ขยายคอลัมน์ Team */
+.team-table .col-team {
+  min-width: 180px;   /* ปรับได้ตามใจ */
+  text-align: left;   /* อ่านง่ายขึ้น */
+  padding-left: 16px;
+}
+
+/* ขยายคอลัมน์ Region */
+.team-table .col-region {
+  min-width: 160px;
+}

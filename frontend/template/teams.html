@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Teams</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+<div class="navbar">
+  <div class="logo">PICKEM</div>
+  <div class="nav-links">
+    <a href="/predict">Pick'em</a>
+    <a href="/matches">Matches</a>
+    <a href="/tournament">Tournament</a>
+    <a href="/leaderboard">Leaderboard</a>
+    <a href="/teams">Teams</a>
+    
+    {% if logged_in %}
+        <span class="user-name">{{ session['username'] }}</span>
+        <a href="/logout" class="logout-link">Log out</a>
+    {% else %}
+        <span>Profile</span>
+    {% endif %}
+  </div>
+</div>
+<div class="header">
+  <h1>Teams</h1>
+  <div class="tabs">
+    <span class="active">Teams information</span>
+  </div>
+</div>
+
+<div class="team-container">
+  <table class="team-table">
+    <thead>
+    <tr>
+        <th>Place</th>
+        <th class="col-logo">Logo</th>
+        <th class="col-team">Team</th>
+        <th>Short</th>
+        <th class="col-region">Region</th>
+        <th>Wins</th>
+        <th>Losses</th>
+        <th>Points</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    {% for team in teams %}
+    <tr>
+        <td>{{ loop.index }}</td>
+
+        <td class="col-logo">
+        {% if team.Logo %}
+            <div class="logo-box">
+            <img src="{{ team.Logo }}" alt="{{ team.Teamname }}" class="team-logo">
+            </div>
+        {% else %}
+            <span>-</span>
+        {% endif %}
+        </td>
+
+        <td class="col-team">{{ team.Teamname }}</td>
+        <td>{{ team.Shortname }}</td>
+        <td class="col-region">{{ team.Region }}</td>
+        <td>{{ team.Wins }}</td>
+        <td>{{ team.Losses }}</td>
+        <td><strong>{{ team.Points }}</strong></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+</body>
+</html>

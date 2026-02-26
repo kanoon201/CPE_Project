@@ -11,10 +11,11 @@
 <div class="navbar">
   <div class="logo">PICKEM</div>
   <div class="nav-links">
-    <span>Matches</span>
-    <span>Tournament</span>
-    <span>Leaderboard</span>
-    <span>Teams</span>
+    <a href="/predict">Pick'em</a>
+    <a href="/matches">Matches</a>
+    <a href="/tournament">Tournament</a>
+    <a href="/leaderboard">Leaderboard</a>
+    <a href="/teams">Teams</a>
     
     {% if logged_in %}
         <span class="user-name">{{ session['username'] }}</span>
@@ -53,61 +54,162 @@
   <div class="match-card">
     <div class="match-top">
       <div class="teams">
-        <span>Sentinels</span>
+        <span class="team1">Sentinels</span>
         <div class="score-box">
-          <input type="number" id="s1" min="0" {% if not logged_in %} readonly placeholder="-" {% endif %}>
-          <input type="number" id="s2" min="0" {% if not logged_in %} readonly placeholder="-" {% endif %}>
+          <input type="number" id="s1" class="score-input" min="0">
+          <input type="number" id="s2" class="score-input" min="0">
         </div>
-        <span>Fnatic</span>
+        <span class="team2">Fnatic</span>
       </div>
     </div>
-    {% if logged_in %}
-      <button class="submit-btn" onclick="submitPrediction()">Submit Prediction</button>
-    {% else %}
-      <p class="login-warning">Please login to play</p>
-    {% endif %}
+
+  {% if logged_in %}
+    <button class="submit-btn" 
+      onclick="submitPrediction(this, 'match1')">
+      Submit Prediction
+    </button>
+  {% else %}
+    <p class="login-warning">Please login to play</p>
+  {% endif %}
+
     <div class="result" id="result"></div>
   </div>
 
   <div class="match-card">
     <div class="match-top">
       <div class="teams">
-        <span>Paper Rex</span>
+        <span class="team1">Paper Rex</span>
         <div class="score-box">
-          <input type="number" id="s3" min="0">
-          <input type="number" id="s4" min="0">
+          <input type="number" id="s3" class="score-input" min="0">
+          <input type="number" id="s4" class="score-input" min="0">
         </div>
-        <span>LOUD</span>
+        <span class="team2">LOUD</span>
       </div>
     </div>
-    <button class="submit-btn" onclick="submitPrediction2()">Submit Prediction</button>
+  {% if logged_in %}
+    <button class="submit-btn" 
+      onclick="submitPrediction(this, 'match2')">
+      Submit Prediction
+    </button>
+  {% else %}
+    <p class="login-warning">Please login to play</p>
+  {% endif %}
     <div class="result" id="result2"></div>
   </div>
 
 </div>
 
+
+
 <script>
+function submitPrediction(button, matchId) {
+  // หา match-card ที่กด
+  const card = button.closest(".match-card");
+  // อ่าน score เฉพาะในการ์ดนี้
+  const inputs = card.querySelectorAll(".score-input");
+  const s1 = inputs[0].value;
+  const s2 = inputs[1].value;
 
-function submitPrediction(){
-  let s1=document.getElementById('s1').value;
-  let s2=document.getElementById('s2').value;
-  if(s1===""||s2===""){
+  // เช็คกรอกครบ
+  if (isNaN(s1) || isNaN(s2)) {
     document.getElementById('result').innerText="Please enter both scores.";
-  }else{
-    document.getElementById('result').innerText="Prediction Submitted: "+s1+" - "+s2;
+    return;
   }
+
+  // เช็คติดลบ
+  if (s1 < 0 || s2 < 0) {
+    document.getElementById('result').innerText="Scores cannot be negative.";
+    return;
+  }
+  // ✅ เช็ค BO3
+  const maxScore = Math.max(s1, s2);
+  const minScore = Math.min(s1, s2);
+  if (!(maxScore === 2 && minScore <= 1)) {
+    document.getElementById('result').innerText="Please enter a valid BO3 score (2-0, 2-1, 1-2, 0-2)";
+    return;
+  }
+
+  // อ่านชื่อทีม
+  const team1 = card.querySelector(".team1").innerText;
+  const team2 = card.querySelector(".team2").innerText;
+
+  const winner =
+    parseInt(s1) > parseInt(s2) ? team1 : team2;
+
+  fetch("/submit_prediction", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      match_id: matchId,
+      predict_winner: winner,
+      predict_score: s1 + "-" + s2
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.status === "success") {
+      card.querySelector(".result").innerText =
+        "Prediction saved / updated!";
+    }
+  });
 }
 
-function submitPrediction2(){
-  let s3=document.getElementById('s3').value;
-  let s4=document.getElementById('s4').value;
-  if(s3===""||s4===""){
-    document.getElementById('result2').innerText="Please enter both scores.";
-  }else{
-    document.getElementById('result2').innerText="Prediction Submitted: "+s3+" - "+s4;
+function submitPrediction2(button, matchId) {
+  // หา match-card ที่กด
+  const card = button.closest(".match-card");
+  // อ่าน score เฉพาะในการ์ดนี้
+  const inputs = card.querySelectorAll(".score-input");
+  const s1 = inputs[0].value;
+  const s2 = inputs[1].value;
+
+  // เช็คกรอกครบ
+  if (isNaN(s1) || isNaN(s2)) {
+    document.getElementById('result').innerText="Please enter both scores.";
+    return;
   }
+
+  // เช็คติดลบ
+  if (s1 < 0 || s2 < 0) {
+    document.getElementById('result').innerText="Scores cannot be negative.";
+    return;
+  }
+  // ✅ เช็ค BO3
+  const maxScore = Math.max(s1, s2);
+  const minScore = Math.min(s1, s2);
+  if (!(maxScore === 5 && minScore <= 1)) {
+    document.getElementById('result2').innerText="Please enter a valid BO5 score (5-0, 5-1, 4-5, 1-5)";
+    return;
+  }
+  
+  // อ่านชื่อทีม
+  const team1 = card.querySelector(".team1").innerText;
+  const team2 = card.querySelector(".team2").innerText;
+
+  const winner =
+    parseInt(s1) > parseInt(s2) ? team1 : team2;
+
+  fetch("/submit_prediction", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      match_id: matchId,
+      predict_winner: winner,
+      predict_score: s1 + "-" + s2
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.status === "success") {
+      card.querySelector(".result").innerText =
+        "Prediction saved / updated!";
+    }
+  });
 }
+
+
 </script>
+
 
 </body>
 </html>
+
