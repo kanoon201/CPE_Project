@@ -16,6 +16,12 @@
     <a href="/tournament">Tournament</a>
     <a href="/leaderboard">Leaderboard</a>
     <a href="/teams">Teams</a>
+
+    {% if is_admin %}
+      <a href="/results" style="color:#00ff99; font-weight:bold;">
+        Results (Admin)
+      </a>
+    {% endif %}
     
     {% if logged_in %}
         <span class="user-name">{{ session['username'] }}</span>
@@ -51,30 +57,78 @@
 <div class="match-section">
   <h2>25 - 26 March</h2>
 
-  <div class="match-card">
-    <div class="match-top">
-      <div class="teams">
-        <span class="team1">Sentinels</span>
+  {# 👇 เพิ่มบรรทัดนี้ตรงนี้ #}
+  {% set current_bracket = "" %}
+  {% set ns = namespace(bracket="") %}
+
+  {% for m in matches %}
+
+    {# 👇 เพิ่ม block นี้บนสุดของ loop #}
+    {% if m.bracket != ns.bracket %}
+      <h2
+        style="
+          margin-top:40px;
+          {% if m.bracket == 'grand' %}
+            color: gold;
+            text-shadow: 0 0 10px rgba(255,215,0,0.8);
+          {% endif %}
+        "
+      >
+        {{ m.bracket|upper }} BRACKET
+      </h2>
+      {% set ns.bracket = m.bracket %}
+    {% endif %}
+    {% if m.match_id == "LF" %}
+      <h2 style="margin-top:30px; color:#ff5555;">
+        LOWER FINAL
+      </h2>
+    {% endif %}
+
+    {# 👇 ของเดิมคุณ (match-card) อยู่ตรงนี้ #}
+    <div class="match-card">
+
+      <h4>
+        {% if m.match_id == "LF" %}
+          Lower Final (LF)
+        {% else %}
+          {{ m.round }} ({{ m.match_id }})
+        {% endif %}
+      </h4>
+
+      {% if m.team1 and m.team2 %}
+        <p>
+          <span class="team1">{{ m.team1 }}</span>
+          vs
+          <span class="team2">{{ m.team2 }}</span>
+        </p>
+      {% else %}
+        <p style="color:gray;">Waiting for teams</p>
+      {% endif %}
+
+      {% if m.status == "pending" %}
+        <p style="color:gray;">⏳ Match not open yet</p>
+
+      {% elif m.status == "upcoming" %}
         <div class="score-box">
-          <input type="number" id="s1" class="score-input" min="0">
-          <input type="number" id="s2" class="score-input" min="0">
+          <input type="number" class="score-input" min="0">
+          <input type="number" class="score-input" min="0">
         </div>
-        <span class="team2">Fnatic</span>
-      </div>
+        <button class="submit-btn"
+          onclick="submitPrediction(this,'{{ m.match_id }}')">
+          Submit Prediction
+        </button>
+        <div class="result"></div>
+
+      {% elif m.status == "completed" %}
+        <p style="color:#00ff99;">✅ Match Completed</p>
+        <p>Final Score: <b>{{ m.score }}</b></p>
+        <p>Winner: {{ m.winner }}</p>
+      {% endif %}
+
     </div>
+  {% endfor %}
 
-  {% if logged_in %}
-    <button class="submit-btn" 
-      onclick="submitPrediction(this, 'match1')">
-      Submit Prediction
-    </button>
-  {% else %}
-    <p class="login-warning">Please login to play</p>
-  {% endif %}
-
-    <div class="result" id="result"></div>
-  </div>
-
+{# 
   <div class="match-card">
     <div class="match-top">
       <div class="teams">
@@ -96,9 +150,34 @@
   {% endif %}
     <div class="result" id="result2"></div>
   </div>
-
+#}
 </div>
 
+
+{% if is_admin %}
+<div class="match-card" style="border:2px solid #00ff99;">
+  <h3 style="color:#00ff99;">ADMIN – Update Match</h3>
+
+  <input id="admin_match_id" placeholder="match_id (เช่น UQF1)">
+  <input id="admin_team1" placeholder="Team 1">
+  <input id="admin_team2" placeholder="Team 2">
+
+  <select id="admin_status">
+    <option value="pending">pending</option>
+    <option value="upcoming">upcoming</option>
+    <option value="completed">completed</option>
+  </select>
+
+  <input id="admin_score" placeholder="score (2-1)">
+  <input id="admin_winner" placeholder="winner">
+
+  <button class="submit-btn" onclick="adminUpdateMatch()">
+    Update Match
+  </button>
+
+  <div id="admin_result"></div>
+</div>
+{% endif %}
 
 
 <script>
@@ -107,11 +186,11 @@ function submitPrediction(button, matchId) {
   const card = button.closest(".match-card");
   // อ่าน score เฉพาะในการ์ดนี้
   const inputs = card.querySelectorAll(".score-input");
-  const s1 = inputs[0].value;
-  const s2 = inputs[1].value;
+  const s1 = parseInt(inputs[0].value, 10);
+  const s2 = parseInt(inputs[1].value, 10);
 
   // เช็คกรอกครบ
-  if (s1 === "" || s2 === "") {
+  if (isNaN(s1) || isNaN(s2)) {
     card.querySelector(".result").innerText =
       "Please enter both scores.";
     return;
@@ -119,14 +198,15 @@ function submitPrediction(button, matchId) {
 
   // เช็คติดลบ
   if (s1 < 0 || s2 < 0) {
-    document.getElementById('result').innerText="Scores cannot be negative.";
+    card.querySelector(".result").innerText="Scores cannot be negative.";
     return;
   }
   // ✅ เช็ค BO3
   const maxScore = Math.max(s1, s2);
   const minScore = Math.min(s1, s2);
   if (!(maxScore === 2 && minScore <= 1)) {
-    document.getElementById('result').innerText="Please enter a valid BO3 score (2-0, 2-1, 1-2, 0-2)";
+    card.querySelector(".result").innerText =
+    "Please enter a valid BO3 score (2-0, 2-1, 1-2, 0-2)";
     return;
   }
 
@@ -208,8 +288,29 @@ function submitPrediction2(button, matchId) {
   });
 }
 
+function adminUpdateMatch() {
+  fetch("/admin/update_match", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      match_id: admin_match_id.value,
+      team1: admin_team1.value || null,
+      team2: admin_team2.value || null,
+      status: admin_status.value,
+      score: admin_score.value || null,
+      winner: admin_winner.value || null
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    admin_result.innerText = data.message;
+    location.reload();
+  });
+}
+
 
 </script>
+
 
 
 </body>

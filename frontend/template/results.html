@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Match Results</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+<div class="navbar">
+  <div class="logo">PICKEM</div>
+  <div class="nav-links">
+    <a href="/predict">Pick'em</a>
+    <a href="/leaderboard">Leaderboard</a>
+    <a href="/teams">Teams</a>
+    <a href="/results" style="color:#00ff99;">Results</a>
+    <a href="/logout">Logout</a>
+  </div>
+</div>
+
+<h1>Match Results</h1>
+
+{% for r in results %}
+<div class="match-card">
+  <h3>{{ r.team1 }} vs {{ r.team2 }}</h3>
+  <p><b>Score:</b> {{ r.score }}</p>
+  <p><b>Winner:</b> {{ r.winner }}</p>
+  <p><b>Date:</b> {{ r.played_at }}</p>
+</div>
+{% else %}
+<p>No results yet</p>
+{% endfor %}
+
+<hr>
+
+<h2>ADMIN – Add / Update Result</h2>
+
+<input id="match_id" placeholder="match_id">
+<input id="team1" placeholder="Team 1">
+<input id="team2" placeholder="Team 2">
+<input id="score" placeholder="Score (2-1)">
+<input id="winner" placeholder="Winner">
+<input type="datetime-local" id="played_at">
+
+<button onclick="saveResult()">Save Result</button>
+<div id="admin_result"></div>
+
+<script>
+function saveResult() {
+  fetch("/admin/result", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      match_id: match_id.value,
+      team1: team1.value,
+      team2: team2.value,
+      score: score.value,
+      winner: winner.value,
+      played_at: played_at.value
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    admin_result.innerText = data.message;
+    location.reload();
+  });
+}
+</script>
+
+</body>
+</html>

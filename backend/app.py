@@ -1,3 +1,5 @@
+from flask import abort
+
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from db import get_mysql_connection, get_mongo_collection
 import mysql.connector
@@ -10,6 +12,7 @@ app = Flask(
 
 app.secret_key = 'your_super_secret_key_here'
 
+
 @app.route("/")
 def index():
     if "username" in session:
@@ -18,9 +21,20 @@ def index():
 
 @app.route("/predict")
 def predict_page():
-    if "username" not in session:
+    if "user_id" not in session:
         return redirect(url_for("login"))
-    return render_template("index.html", logged_in=True)
+
+    is_admin = session.get("username") == "ADMIN"
+
+    match_col = get_mongo_collection("pickem_matches")
+    matches = list(match_col.find().sort("order", 1))
+
+    return render_template(
+        "index.html",
+        matches=matches,
+        logged_in=True,
+        is_admin=is_admin
+    )
 
 @app.route("/submit_prediction", methods=["POST"])
 def submit_prediction():
@@ -132,7 +146,6 @@ def logout():
     session.clear()
     return redirect(url_for("index"))
 
-
 @app.route("/teams")
 def teams_page():
     conn = get_mysql_connection()
@@ -153,6 +166,79 @@ def teams_page():
         teams=teams,
         logged_in=("username" in session)
     )
+
+
+@app.route("/results")
+def results_page():
+    if session.get("username") != "ADMIN":
+        return redirect(url_for("index"))
+
+    collection = get_mongo_collection("match_results")
+
+    if collection is None:
+        results = []
+    else:
+        results = list(collection.find())
+
+    return render_template(
+        "results.html",
+        results=results,
+        logged_in=True,
+        is_admin=True
+    )
+from datetime import datetime
+
+@app.route("/admin/result", methods=["POST"])
+def admin_add_result():
+    if session.get("username") != "ADMIN":
+        return {"error": "unauthorized"}, 403
+
+    data = request.json
+    collection = get_mongo_collection("match_results")
+
+    collection.update_one(
+        {"match_id": data["match_id"]},
+        {"$set": {
+            "match_id": data["match_id"],
+            "team1": data["team1"],
+            "team2": data["team2"],
+            "score": data["score"],
+            "winner": data["winner"],
+            "played_at": data.get("played_at"),
+            "updated_by": session["username"],
+            "updated_at": datetime.utcnow()
+        }},
+        upsert=True
+    )
+
+    return {"status": "success", "message": "Result saved"}
+
+
+@app.route("/admin/update_match", methods=["POST"])
+def admin_update_match():
+    if session.get("username") != "ADMIN":
+        return {"error": "unauthorized"}, 403
+
+    data = request.json
+    col = get_mongo_collection("pickem_matches")
+
+    update_fields = {
+        "team1": data.get("team1"),
+        "team2": data.get("team2"),
+        "status": data.get("status", "upcoming")
+    }
+
+    if data.get("score"):
+        update_fields["score"] = data["score"]
+        update_fields["winner"] = data["winner"]
+        update_fields["status"] = "completed"
+
+    col.update_one(
+        {"match_id": data["match_id"]},
+        {"$set": update_fields}
+    )
+
+    return {"status": "success"}
 
 
 if __name__ == '__main__':
