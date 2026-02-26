@@ -111,8 +111,9 @@ function submitPrediction(button, matchId) {
   const s2 = inputs[1].value;
 
   // เช็คกรอกครบ
-  if (isNaN(s1) || isNaN(s2)) {
-    document.getElementById('result').innerText="Please enter both scores.";
+  if (s1 === "" || s2 === "") {
+    card.querySelector(".result").innerText =
+      "Please enter both scores.";
     return;
   }
 
