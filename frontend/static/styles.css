@@ -12,12 +12,23 @@
   
   /* NAVBAR */
   .navbar{
-    background:linear-gradient(90deg,#8b0000,#000);
-    padding:20px 60px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    box-shadow:0 0 20px #ff000044;
+      background:linear-gradient(90deg,#8b0000,#000);
+      padding:20px 60px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      box-shadow:0 0 20px #ff000044;
+      position:fixed;
+      top:0;
+      left:0;
+      right:0;
+      z-index:1000;
+  }
+
+  body{
+      background:#0b0b0b;
+      color:white;
+      padding-top:80px;
   }
   
   .logo{
@@ -28,9 +39,25 @@
   }
   
   .nav-links{
-    display:flex;
-    gap:30px;
-    font-size:14px;
+      display:flex;
+      gap:30px;
+      font-size:14px;
+  }
+
+  .nav-links a {
+      color: white;
+      text-decoration: none;
+      transition: 0.3s;
+  }
+
+  .nav-links a.active {
+      color: #ff2a2a;
+      border-bottom: 2px solid #ff2a2a;
+      padding-bottom: 2px;
+  }
+
+  .nav-links a:hover {
+      color: #ff2a2a;
   }
   
   .nav-links span{
@@ -121,26 +148,38 @@
   
   /* MATCH SECTION */
   .match-section{
-    padding:20px 60px 60px 60px;
+      padding:20px 60px 60px 60px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
   }
-  
+
   .match-section h2{
-    margin-bottom:30px;
+      grid-column: 1 / -1;
+      margin-bottom: 10px;
+      margin-top: 20px;
   }
-  
+
   .match-card{
-    background:linear-gradient(135deg,#1a0000,#000);
-    border:1px solid #ff2a2a;
-    border-radius:20px;
-    padding:30px;
-    margin-bottom:30px;
-    box-shadow:0 0 20px #ff000033;
+      background:linear-gradient(135deg,#1a0000,#000);
+      border:1px solid #ff2a2a;
+      border-radius:20px;
+      padding:30px;
+      box-shadow:0 0 20px #ff000033;
   }
   
   .match-top{
     display:flex;
     justify-content:space-between;
     align-items:center;
+  }
+
+  .match-card p {
+      text-align: center;
+  }
+
+  .match-card hr {
+      margin: 10px 0;
   }
   
   .teams{
@@ -151,8 +190,10 @@
   }
   
   .score-box{
-    display:flex;
-    gap:10px;
+      display:flex;
+      gap:10px;
+      justify-content: center;
+      margin-top: 10px;
   }
   
   .score-box input{
@@ -167,15 +208,18 @@
   }
   
   .submit-btn{
-    margin-top:20px;
-    background:#ff2a2a;
-    padding:10px 20px;
-    border:none;
-    border-radius:20px;
-    cursor:pointer;
-    transition:0.3s;
+      margin-top:20px;
+      background:#ff2a2a;
+      padding:10px 20px;
+      border:none;
+      border-radius:20px;
+      cursor:pointer;
+      transition:0.3s;
+      display:block;
+      margin-left:auto;
+      margin-right:auto;
   }
-  
+
   .submit-btn:hover{
     background:white;
     color:#ff2a2a;

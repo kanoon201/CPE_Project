@@ -7,23 +7,29 @@
 </head>
 
 <body>
+
 <div class="navbar">
-  <div class="logo">PICKEM</div>
+  <div class="logo">PICK'EM</div>
   <div class="nav-links">
-    <a href="/predict">Pick'em</a>
+    <a href="/predict">Predict</a>
     <a href="/matches">Matches</a>
     <a href="/tournament">Tournament</a>
     <a href="/leaderboard">Leaderboard</a>
     <a href="/teams">Teams</a>
     
     {% if logged_in %}
-        <span class="user-name">{{ session['username'] }}</span>
+        {% if is_admin %}
+            <span class="user-name" style="color:#00ff99; font-weight:bold;">⚙ {{ session['username'] }}</span>
+        {% else %}
+            <span class="user-name">{{ session['username'] }}</span>
+        {% endif %}
         <a href="/logout" class="logout-link">Log out</a>
     {% else %}
         <span>Profile</span>
     {% endif %}
   </div>
 </div>
+
 <div class="header">
   <h1>Teams</h1>
   <div class="tabs">

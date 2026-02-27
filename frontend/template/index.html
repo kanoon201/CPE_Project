@@ -1,30 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Valorant Predict</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Valorant Predict</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
+
+<script>
+  const path = window.location.pathname;
+  document.querySelectorAll('.nav-links a').forEach(a => {
+    if (a.getAttribute('href') === path) {
+      a.classList.add('active');
+    }
+  });
+</script>
+
 <body>
 
 <div class="navbar">
-  <div class="logo">PICKEM</div>
+  <div class="logo">PICK'EM</div>
   <div class="nav-links">
-    <a href="/predict">Pick'em</a>
+    <a href="/predict">Predict</a>
     <a href="/matches">Matches</a>
     <a href="/tournament">Tournament</a>
     <a href="/leaderboard">Leaderboard</a>
     <a href="/teams">Teams</a>
-
-    {% if is_admin %}
-      <a href="/results" style="color:#00ff99; font-weight:bold;">
-        Results (Admin)
-      </a>
-    {% endif %}
     
     {% if logged_in %}
-        <span class="user-name">{{ session['username'] }}</span>
+        {% if is_admin %}
+            <span class="user-name" style="color:#00ff99; font-weight:bold;">⚙ {{ session['username'] }}</span>
+        {% else %}
+            <span class="user-name">{{ session['username'] }}</span>
+        {% endif %}
         <a href="/logout" class="logout-link">Log out</a>
     {% else %}
         <span>Profile</span>
@@ -32,14 +40,58 @@
   </div>
 </div>
 
-<div class="header">
-  <h1>Predict</h1>
-  <div class="tabs">
-    <span class="active">Predictions</span>
-    <span>Leagues</span>
-    <span>Prizes</span>
-    <span>Rules</span>
+<div class="header" style="display:flex; justify-content:space-between; align-items:flex-start;">
+  <div>
+    <h1>Predict</h1>
+    <div class="tabs">
+      <span class="active">Predictions</span>
+      <span>Leagues</span>
+      <span>Prizes</span>
+      <span>Rules</span>
+    </div>
   </div>
+
+  {# add admin result form here #}
+  {% if is_admin %}
+  <div style="border:2px solid #00ff99; border-radius:16px; padding:16px; min-width:400px;">
+    <h3 style="color:#00ff99; margin-bottom:10px;">ADMIN – Update Match</h3>
+    <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+      <select id="admin_match_id" style="flex:1;">
+        <option value="">-- Select Match --</option>
+        {% for m in matches %}
+          <option value="{{ m.match_id }}">{{ m.match_id }} – {{ m.round }}</option>
+        {% endfor %}
+      </select>
+      <select id="admin_team1" style="flex:1;">
+        <option value="">-- Team 1 --</option>
+        {% for short, t in team_logos.items() %}
+          <option value="{{ short }}">{{ t.Teamname }}</option>
+        {% endfor %}
+      </select>
+      <select id="admin_team2" style="flex:1;">
+        <option value="">-- Team 2 --</option>
+        {% for short, t in team_logos.items() %}
+          <option value="{{ short }}">{{ t.Teamname }}</option>
+        {% endfor %}
+      </select>
+      <select id="admin_status" style="flex:1;">
+        <option value="pending">pending</option>
+        <option value="upcoming">upcoming</option>
+        <option value="completed">completed</option>
+      </select>
+      <input id="admin_score" placeholder="score (2-1)" style="flex:1;">
+      <select id="admin_winner" style="flex:1;">
+        <option value="">-- Winner --</option>
+        {% for short, t in team_logos.items() %}
+          <option value="{{ short }}">{{ t.Teamname }}</option>
+        {% endfor %}
+      </select>
+      <button class="submit-btn" style="margin:0;" onclick="adminUpdateMatch()">Update Match</button>
+    </div>
+    <div id="admin_result" style="margin-top:8px; color:#00ff99;"></div>
+  </div>
+  {% endif %}
+
 </div>
 
 
@@ -106,11 +158,11 @@
             {% else %}
               <div class="match-logo-placeholder">{{ m.team1[:3] }}</div>
             {% endif %}
-            <span class="team1">{{ m.team1 }}</span>
+            <span class="team1">{{ team_logos[m.team1].Teamname if m.team1 in team_logos else m.team1 }}</span>
           </div>
           <span class="vs-text">VS</span>
           <div class="team-side team-side-right">
-            <span class="team2">{{ m.team2 }}</span>
+            <span class="team2">{{ team_logos[m.team2].Teamname if m.team2 in team_logos else m.team2 }}</span>
             {% if m.team2 in team_logos %}
               <img src="{{ team_logos[m.team2].Logo }}" class="match-team-logo" alt="{{ m.team2 }}">
             {% else %}
@@ -126,10 +178,22 @@
         <p style="color:gray;">⏳ Match not open yet</p>
 
       {% elif m.status == "upcoming" %}
+        {% set p = user_predictions.get(m.match_id) %}
         <div class="score-box">
-          <input type="number" class="score-input" min="0">
-          <input type="number" class="score-input" min="0">
+          {% if p %}
+            {% set prev = p.Predict_Score.split('-') %}
+            <input type="number" class="score-input" min="0" value="{{ prev[0] }}">
+            <input type="number" class="score-input" min="0" value="{{ prev[1] }}">
+          {% else %}
+            <input type="number" class="score-input" min="0">
+            <input type="number" class="score-input" min="0">
+          {% endif %}
         </div>
+        {% if p %}
+          <p class="prev-prediction" style="text-align:center; color:gray; font-size:0.8em; margin-top:8px;">
+            Previous: {{ p.Predict_Winner }} {{ p.Predict_Score }}
+          </p>
+        {% endif %}
         <button class="submit-btn"
           onclick="submitPrediction(this,'{{ m.match_id }}')">
           Submit Prediction
@@ -138,25 +202,46 @@
 
       {% elif m.status == "completed" %}
         <p style="color:#00ff99;">✅ Match Completed</p>
-        <p>Final Score: <b>{{ m.score }}</b></p>
-        <p>Winner: {{ m.winner }}</p>
-        <p style="color:#00ff99; font-weight:bold;">
+        {% set fscores = m.score.split('-') %}
+        <p style="text-align:center;">
+          Final Score: <b>
+            {{ m.team1 }} {{ fscores[0] }} 
+            - {{ fscores[1] }} {{ m.team2 }}
+          </b>
+        </p>
+        <p>Winner: 
+          {% if m.winner in team_logos %}
+            {{ team_logos[m.winner].Teamname }}
+          {% else %}
+            {{ m.winner }}
+          {% endif %}
+        </p>
         <hr>
-
-        <b>Your Prediction:</b>
+        <p style="text-align:center; font-weight:bold; margin-bottom:8px;">Your Prediction:</p>
 
         {% set p = user_predictions.get(m.match_id) %}
 
         {% if p %}
-          <p>
+          {% set scores = p.Predict_Score.split('-') %}
+          <p style="text-align:center;">
             Winner: {{ p.Predict_Winner }}
-            {% if p.Predict_Winner == m.winner %}
-              <span style="color:#00ff99;">✔</span>
-            {% else %}
-              <span style="color:#ff5555;">✖</span>
-            {% endif %}
+              {% set t1_short = m.team1 %}
+              {% set t1_full  = team_logos[m.team1].Teamname if m.team1 in team_logos else m.team1 %}
+              {% set t2_short = m.team2 %}
+              {% set t2_full  = team_logos[m.team2].Teamname if m.team2 in team_logos else m.team2 %}
+              {% set w = m.winner %}
+              {% set predicted = p.Predict_Winner %}
+              {% if (w == t1_short or w == t1_full) and (predicted == t1_short or predicted == t1_full) %}
+                <span style="color:#00ff99;">✔</span>
+              {% elif (w == t2_short or w == t2_full) and (predicted == t2_short or predicted == t2_full) %}
+                <span style="color:#00ff99;">✔</span>
+              {% else %}
+                <span style="color:#ff5555;">✖</span>
+              {% endif %}
           </p>
-          <p>Score: {{ p.Predict_Score }}</p>
+          <p style="text-align:center;">
+            {{ m.team1 }} {{ scores[0] }} - {{ scores[1] }} {{ m.team2 }}
+          </p>
         {% else %}
           <p style="color:gray;">
             You did not make a prediction
@@ -192,33 +277,11 @@
     <div class="result" id="result2"></div>
   </div>
 #}
+
+
 </div>
 
 
-{% if is_admin %}
-<div class="match-card" style="border:2px solid #00ff99;">
-  <h3 style="color:#00ff99;">ADMIN – Update Match</h3>
-
-  <input id="admin_match_id" placeholder="match_id (เช่น UQF1)">
-  <input id="admin_team1" placeholder="Team 1 (Shortname)">
-  <input id="admin_team2" placeholder="Team 2 (Shortname)">
-
-  <select id="admin_status">
-    <option value="pending">pending</option>
-    <option value="upcoming">upcoming</option>
-    <option value="completed">completed</option>
-  </select>
-
-  <input id="admin_score" placeholder="score (2-1)">
-  <input id="admin_winner" placeholder="winner">
-
-  <button class="submit-btn" onclick="adminUpdateMatch()">
-    Update Match
-  </button>
-
-  <div id="admin_result"></div>
-</div>
-{% endif %}
 
 
 <script>
@@ -269,11 +332,17 @@ function submitPrediction(button, matchId) {
   })
   .then(res => res.json())
   .then(data => {
-    if (data.status === "success") {
-      card.querySelector(".result").innerText =
-        "Prediction saved / updated!";
-    }
-  });
+      if (data.status === "success") {
+        card.querySelector(".result").innerText =
+          "Prediction saved / updated!";
+        
+        // อัปเดต Previous ทันที
+        const prevText = card.querySelector(".prev-prediction");
+        if (prevText) {
+          prevText.innerText = `Previous: ${winner} ${s1}-${s2}`;
+        }
+      }
+    });
 }
 
 function submitPrediction2(button, matchId) {

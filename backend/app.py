@@ -198,7 +198,8 @@ def teams_page():
     return render_template(
         "teams.html",
         teams=teams,
-        logged_in=("username" in session)
+        logged_in=("username" in session),
+        is_admin=(session.get("username") == "ADMIN")
     )
 
 
