@@ -29,11 +29,45 @@ def predict_page():
     match_col = get_mongo_collection("pickem_matches")
     matches = list(match_col.find().sort("order", 1))
 
+    # ดึง team logos จาก MySQL
+    conn_t = get_mysql_connection()
+    cursor_t = conn_t.cursor(dictionary=True)
+    cursor_t.execute("SELECT Shortname, Teamname, Logo FROM Team")
+    team_logos = {row["Shortname"]: row for row in cursor_t.fetchall()}
+    cursor_t.close()
+    conn_t.close()
+
+    user_predictions = {}
+
+    # หลังจากดึง matches จาก MongoDB แล้ว
+
+    user_predictions = {}
+
+    if "user_id" in session:
+        conn = get_mysql_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("""
+            SELECT Match_id, Predict_Winner, Predict_Score
+            FROM Pickem_DATA
+            WHERE User_id = %s
+        """, (session["user_id"],))
+
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        # แปลงเป็น dict
+        for r in rows:
+            user_predictions[r["Match_id"]] = r
+
     return render_template(
         "index.html",
         matches=matches,
-        logged_in=True,
-        is_admin=is_admin
+        user_predictions=user_predictions,
+        team_logos=team_logos,          # ← เพิ่มบรรทัดนี้
+        logged_in=("user_id" in session),
+        is_admin=(session.get("username") == "ADMIN")
     )
 
 @app.route("/submit_prediction", methods=["POST"])

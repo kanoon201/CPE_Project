@@ -55,8 +55,6 @@
 
 
 <div class="match-section">
-  <h2>25 - 26 March</h2>
-
   {# 👇 เพิ่มบรรทัดนี้ตรงนี้ #}
   {% set current_bracket = "" %}
   {% set ns = namespace(bracket="") %}
@@ -65,22 +63,27 @@
 
     {# 👇 เพิ่ม block นี้บนสุดของ loop #}
     {% if m.bracket != ns.bracket %}
-      <h2
-        style="
-          margin-top:40px;
-          {% if m.bracket == 'grand' %}
-            color: gold;
-            text-shadow: 0 0 10px rgba(255,215,0,0.8);
-          {% endif %}
-        "
-      >
-        {{ m.bracket|upper }} BRACKET
-      </h2>
+      {% if m.bracket != 'grand' %}
+        <h2 style="margin-top:40px;">
+          {{ m.bracket|upper }} BRACKET
+        </h2>
+      {% endif %}
       {% set ns.bracket = m.bracket %}
     {% endif %}
     {% if m.match_id == "LF" %}
       <h2 style="margin-top:30px; color:#ff5555;">
         LOWER FINAL
+      </h2>
+    {% endif %}
+    {% if m.match_id == "GF" %}
+        <h2
+        style="
+          margin-top:40px;
+          color: gold;
+          text-shadow: 0 0 10px rgba(255,215,0,0.8);
+        "
+      >
+        GRAND FINAL
       </h2>
     {% endif %}
 
@@ -96,11 +99,25 @@
       </h4>
 
       {% if m.team1 and m.team2 %}
-        <p>
-          <span class="team1">{{ m.team1 }}</span>
-          vs
-          <span class="team2">{{ m.team2 }}</span>
-        </p>
+        <div class="match-teams">
+          <div class="team-side">
+            {% if m.team1 in team_logos %}
+              <img src="{{ team_logos[m.team1].Logo }}" class="match-team-logo" alt="{{ m.team1 }}">
+            {% else %}
+              <div class="match-logo-placeholder">{{ m.team1[:3] }}</div>
+            {% endif %}
+            <span class="team1">{{ m.team1 }}</span>
+          </div>
+          <span class="vs-text">VS</span>
+          <div class="team-side team-side-right">
+            <span class="team2">{{ m.team2 }}</span>
+            {% if m.team2 in team_logos %}
+              <img src="{{ team_logos[m.team2].Logo }}" class="match-team-logo" alt="{{ m.team2 }}">
+            {% else %}
+              <div class="match-logo-placeholder">{{ m.team2[:3] }}</div>
+            {% endif %}
+          </div>
+        </div>
       {% else %}
         <p style="color:gray;">Waiting for teams</p>
       {% endif %}
@@ -123,7 +140,31 @@
         <p style="color:#00ff99;">✅ Match Completed</p>
         <p>Final Score: <b>{{ m.score }}</b></p>
         <p>Winner: {{ m.winner }}</p>
+        <p style="color:#00ff99; font-weight:bold;">
+        <hr>
+
+        <b>Your Prediction:</b>
+
+        {% set p = user_predictions.get(m.match_id) %}
+
+        {% if p %}
+          <p>
+            Winner: {{ p.Predict_Winner }}
+            {% if p.Predict_Winner == m.winner %}
+              <span style="color:#00ff99;">✔</span>
+            {% else %}
+              <span style="color:#ff5555;">✖</span>
+            {% endif %}
+          </p>
+          <p>Score: {{ p.Predict_Score }}</p>
+        {% else %}
+          <p style="color:gray;">
+            You did not make a prediction
+          </p>
+        {% endif %}
+
       {% endif %}
+
 
     </div>
   {% endfor %}
@@ -159,8 +200,8 @@
   <h3 style="color:#00ff99;">ADMIN – Update Match</h3>
 
   <input id="admin_match_id" placeholder="match_id (เช่น UQF1)">
-  <input id="admin_team1" placeholder="Team 1">
-  <input id="admin_team2" placeholder="Team 2">
+  <input id="admin_team1" placeholder="Team 1 (Shortname)">
+  <input id="admin_team2" placeholder="Team 2 (Shortname)">
 
   <select id="admin_status">
     <option value="pending">pending</option>
