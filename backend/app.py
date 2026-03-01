@@ -1,17 +1,15 @@
 from flask import abort
-
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from db import get_mysql_connection, get_mongo_collection
+from seed_bracket import seed_bracket
 import mysql.connector
 
 app = Flask(
     __name__,
     template_folder = "../frontend/template",
     static_folder = "../frontend/static"
-)      
-
+)
 app.secret_key = 'your_super_secret_key_here'
-
 
 @app.route("/")
 def index():
@@ -23,12 +21,11 @@ def index():
 def predict_page():
     if "user_id" not in session:
         return redirect(url_for("login"))
-
-    is_admin = session.get("username") == "ADMIN"
-
+    
+    is_admin = session.get("username") == "โ"
     match_col = get_mongo_collection("pickem_matches")
     matches = list(match_col.find().sort("order", 1))
-
+    
     # ดึง team logos จาก MySQL
     conn_t = get_mysql_connection()
     cursor_t = conn_t.cursor(dictionary=True)
@@ -38,26 +35,18 @@ def predict_page():
     conn_t.close()
 
     user_predictions = {}
-
-    # หลังจากดึง matches จาก MongoDB แล้ว
-
-    user_predictions = {}
-
     if "user_id" in session:
         conn = get_mysql_connection()
         cursor = conn.cursor(dictionary=True)
-
         cursor.execute("""
-            SELECT Match_id, Predict_Winner, Predict_Score
-            FROM Pickem_DATA
+            SELECT Match_id, Predict_Winner, Predict_Score 
+            FROM Pickem_DATA 
             WHERE User_id = %s
         """, (session["user_id"],))
-
         rows = cursor.fetchall()
         cursor.close()
         conn.close()
-
-        # แปลงเป็น dict
+        
         for r in rows:
             user_predictions[r["Match_id"]] = r
 
@@ -65,40 +54,32 @@ def predict_page():
         "index.html",
         matches=matches,
         user_predictions=user_predictions,
-        team_logos=team_logos,          # ← เพิ่มบรรทัดนี้
+        team_logos=team_logos,
         logged_in=("user_id" in session),
         is_admin=(session.get("username") == "ADMIN")
     )
 
 @app.route("/submit_prediction", methods=["POST"])
 def submit_prediction():
-
-    # 1. เช็ก login
     if "user_id" not in session:
         return {"error": "unauthorized"}, 401
-
+        
     data = request.json
     match_id = data["match_id"]
     predict_winner = data["predict_winner"]
     predict_score = data["predict_score"]
-
     user_id = session["user_id"]
-
+    
     conn = get_mysql_connection()
     cursor = conn.cursor()
-
     try:
-        cursor.execute(
-            """
-            INSERT INTO Pickem_DATA
-            (Match_id, User_id, Predict_Winner, Predict_Score)
+        cursor.execute("""
+            INSERT INTO Pickem_DATA (Match_id, User_id, Predict_Winner, Predict_Score)
             VALUES (%s, %s, %s, %s)
-            ON DUPLICATE KEY UPDATE
-                Predict_Winner = VALUES(Predict_Winner),
-                Predict_Score  = VALUES(Predict_Score)
-            """,
-            (match_id, user_id, predict_winner, predict_score)
-        )
+            ON DUPLICATE KEY UPDATE 
+                Predict_Winner = VALUES(Predict_Winner), 
+                Predict_Score = VALUES(Predict_Score)
+        """, (match_id, user_id, predict_winner, predict_score))
         conn.commit()
         print("✅ INSERT SUCCESS")
     except Exception as e:
@@ -107,7 +88,7 @@ def submit_prediction():
     finally:
         cursor.close()
         conn.close()
-
+        
     return {"status": "success"}
 
 @app.route("/register", methods=["GET", "POST"])
@@ -115,34 +96,26 @@ def register():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
-
         conn = get_mysql_connection()
         cursor = conn.cursor(dictionary=True)
-
         try:
-            cursor.execute(
-                "SELECT * FROM User WHERE Username = %s",
-                (username,)
-            )
+            cursor.execute("SELECT * FROM User WHERE Username = %s", (username,))
             existing = cursor.fetchone()
-
             if existing:
                 flash('Username already exists', 'error')
                 return render_template('register.html')
-
+            
             cursor.execute(
                 "INSERT INTO User (Username, Password) VALUES (%s, %s)",
                 (username, password)
             )
             conn.commit()
-
         finally:
             cursor.close()
             conn.close()
-
+            
         flash('Registration successful! Please log in.', 'success')
         return redirect(url_for("login"))
-
     return render_template("register.html")
 
 @app.route("/login", methods=["GET", "POST"])
@@ -150,51 +123,77 @@ def login():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
-
         conn = get_mysql_connection()
         cursor = conn.cursor(dictionary=True)
-
         try:
-            cursor.execute(
-                "SELECT * FROM User WHERE Username = %s",
-                (username,)
-            )
+            cursor.execute("SELECT * FROM User WHERE Username = %s", (username,))
             user = cursor.fetchone()
-
         finally:
             cursor.close()
             conn.close()
-
+            
         if user and user["Password"] == password:
             session["user_id"] = user["User_id"]
             session["username"] = user["Username"]
             return redirect(url_for("predict_page"))
-
-        flash('Invalid username or password', 'error') 
-        return render_template('login.html')
-
-    return render_template("login.html")
+            
+        flash('Invalid username or password', 'error')
+    return render_template('login.html')
 
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for("index"))
 
+@app.route("/matches")
+def matches_page():
+    match_col = get_mongo_collection("pickem_matches")
+    matches = list(match_col.find().sort("order", 1))
+
+    # จัดกลุ่มตาม bracket และ round
+    upper_rounds = {}
+    lower_rounds = {}
+    grand_rounds = {}
+
+    for m in matches:
+        bracket = m.get("bracket")
+        round_name = m.get("round")
+
+        if bracket == "upper":
+            upper_rounds.setdefault(round_name, []).append(m)
+        elif bracket == "lower":
+            lower_rounds.setdefault(round_name, []).append(m)
+        elif bracket == "grand":
+            grand_rounds.setdefault(round_name, []).append(m)
+
+    conn = get_mysql_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT Shortname, Teamname, Logo FROM Team")
+    team_logos = {row["Shortname"]: row for row in cursor.fetchall()}
+    cursor.close()
+    conn.close()
+
+    return render_template(
+        "matches.html",
+        upper_rounds=upper_rounds,
+        lower_rounds=lower_rounds,
+        grand_rounds=grand_rounds,
+        team_logos=team_logos,
+        logged_in=("username" in session),
+        is_admin=(session.get("username") == "ADMIN")
+    )
 @app.route("/teams")
 def teams_page():
     conn = get_mysql_connection()
     cursor = conn.cursor(dictionary=True)
-
     cursor.execute("""
-        SELECT Teamname, Shortname, Region, Logo, Wins, Losses, Points
-        FROM Team
+        SELECT Teamname, Shortname, Region, Logo, Wins, Losses, Points 
+        FROM Team 
         ORDER BY Points DESC
     """)
     teams = cursor.fetchall()
-
     cursor.close()
     conn.close()
-
     return render_template(
         "teams.html",
         teams=teams,
@@ -202,35 +201,30 @@ def teams_page():
         is_admin=(session.get("username") == "ADMIN")
     )
 
-
 @app.route("/results")
 def results_page():
     if session.get("username") != "ADMIN":
         return redirect(url_for("index"))
-
+    
     collection = get_mongo_collection("match_results")
-
-    if collection is None:
-        results = []
-    else:
-        results = list(collection.find())
-
+    results = list(collection.find()) if collection is not None else []
+    
     return render_template(
         "results.html",
         results=results,
         logged_in=True,
         is_admin=True
     )
+
 from datetime import datetime
 
 @app.route("/admin/result", methods=["POST"])
 def admin_add_result():
     if session.get("username") != "ADMIN":
         return {"error": "unauthorized"}, 403
-
+    
     data = request.json
     collection = get_mongo_collection("match_results")
-
     collection.update_one(
         {"match_id": data["match_id"]},
         {"$set": {
@@ -245,36 +239,62 @@ def admin_add_result():
         }},
         upsert=True
     )
-
     return {"status": "success", "message": "Result saved"}
-
 
 @app.route("/admin/update_match", methods=["POST"])
 def admin_update_match():
     if session.get("username") != "ADMIN":
         return {"error": "unauthorized"}, 403
-
+        
     data = request.json
     col = get_mongo_collection("pickem_matches")
+    match_id = data.get("match_id")
+    team1 = data.get("team1")
+    team2 = data.get("team2")
+    score = data.get("score")
+    winner = data.get("winner")
 
     update_fields = {
-        "team1": data.get("team1"),
-        "team2": data.get("team2"),
+        "team1": team1,
+        "team2": team2,
         "status": data.get("status", "upcoming")
     }
-
-    if data.get("score"):
-        update_fields["score"] = data["score"]
-        update_fields["winner"] = data["winner"]
+    
+    if score and winner:
+        update_fields["score"] = score
+        update_fields["winner"] = winner
         update_fields["status"] = "completed"
 
-    col.update_one(
-        {"match_id": data["match_id"]},
-        {"$set": update_fields}
-    )
+    col.update_one({"match_id": match_id}, {"$set": update_fields})
+
+    if score and winner:
+        current_match = col.find_one({"match_id": match_id})
+        loser = None
+        if current_match["team1"] == winner:
+            loser = current_match["team2"]
+        elif current_match["team2"] == winner:
+            loser = current_match["team1"]
+
+        # ส่งผู้ชนะ
+        next_win_id = current_match.get("next_win")
+        if next_win_id:
+            next_match = col.find_one({"match_id": next_win_id})
+            if next_match:
+                target_field = "team1" if not next_match.get("team1") else ("team2" if not next_match.get("team2") else None)
+                if target_field:
+                    col.update_one({"match_id": next_win_id}, {"$set": {target_field: winner, "status": "upcoming"}})
+
+        # ส่งผู้แพ้
+        next_lose_id = current_match.get("next_lose")
+        if next_lose_id and loser:
+            next_match = col.find_one({"match_id": next_lose_id})
+            if next_match:
+                target_field = "team1" if not next_match.get("team1") else ("team2" if not next_match.get("team2") else None)
+                if target_field:
+                    col.update_one({"match_id": next_lose_id}, {"$set": {target_field: loser, "status": "upcoming"}})
 
     return {"status": "success"}
 
-
 if __name__ == '__main__':
+    seed_bracket()
     app.run(host='0.0.0.0', port=5001, debug=True)
