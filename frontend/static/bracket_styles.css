@@ -1,0 +1,195 @@
+body {
+  background: #000;
+  color: white;
+  font-family: Arial, sans-serif;
+  padding: 40px;
+}
+
+/* SECTION */
+.bracket-section {
+  margin-bottom: 120px;
+}
+
+/* GRID SYSTEM */
+.bracket-container {
+  position: relative;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 260px;
+  column-gap: 200px;
+  margin-top: 40px;
+}
+
+.bracket-col {
+  display: flex;
+  flex-direction: column;
+  gap: 50px;
+}
+
+/* COLUMN LABEL */
+.bracket-col-label {
+  margin-bottom: 20px;
+  text-align: center;
+  font-size: 16px;
+  position: relative;
+}
+
+/* CONNECTOR SVG */
+.connector-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* MATCH BOX */
+.bracket-item {
+  width: 220px;
+  background: #140000;
+  border: 1px solid #ff2a2a;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* TEAM ROW */
+.bracket-item-team {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  background: #111;
+  border-bottom: 1px solid #330000;
+  border-radius: 6px;
+}
+
+.bracket-item-team:last-child {
+  border-bottom: none;
+}
+
+/* LOGO */
+.bracket-logo {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.team-name {
+  flex: 1;
+  text-align: left;
+  margin-left: 6px;
+  font-size: 14px;
+}
+
+.score {
+  font-weight: bold;
+}
+
+/* ================= UPPER BRACKET ================= */
+
+.upper-semi {
+  margin-top: -40px;
+  gap: 160px;
+}
+
+.upper-semi .bracket-item {
+  transform: translateX(-100px);
+}
+
+.upper-final {
+  margin-top: 180px;
+}
+
+.upper-final .bracket-item {
+  transform: translateX(-200px);
+}
+
+/* LABEL POSITION - UPPER */
+
+.upper-section .upper-quarter .bracket-col-label {
+  top: 50px;
+  left: -20px;
+}
+
+.upper-section .upper-semi .bracket-col-label {
+  top: 160px;
+  left: -125px;
+}
+
+.upper-section .upper-final .bracket-col-label {
+  top: 50px;
+  left: -225px;
+}
+
+/* ================= LOWER BRACKET ================= */
+
+.lower-section .lower-round-1 .bracket-col-label {
+  top: 45px;
+  left: -25px;
+}
+
+.lower-section .lower-round-2 .bracket-col-label {
+  top: 45px;
+  left: -125px;
+}
+
+.lower-section .lower-round-3 .bracket-col-label {
+  top: 45px;
+  left: -225px;
+}
+
+.lower-section .lower-final .bracket-col-label {
+  top: 50px;
+  left: -270px;
+}
+
+.lower-round-2 {
+  position: relative;
+  top: -50px;
+}
+
+.lower-round-2 .bracket-item {
+  transform: translateX(-100px);
+}
+
+.lower-round-3 .bracket-item {
+  transform: translateX(-200px);
+}
+
+.lower-final {
+  position: relative;
+  top: -50px;
+}
+
+.lower-final .bracket-item {
+  transform: translateX(-250px);
+}
+
+/* ================= GRAND FINAL ================= */
+
+.grand-final {
+  position: relative;
+  top: -830px;
+  left: 1130px;
+}
+
+.grand-final-section .grand-final .bracket-col-label {
+  top: 55px;
+  left: -20px;
+  white-space: nowrap;
+}
+
+/* ================= WINNER / LOSER ================= */
+
+.winner {
+  background: #220000;
+  color: #ff4444;
+}
+
+.loser {
+  opacity: 0.6;
+}

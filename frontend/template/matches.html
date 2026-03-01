@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Matches</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='bracket_styles.css') }}">
+</head>
+<body>
+
+<div class="navbar">
+  <div class="logo">PICK'EM</div>
+  <div class="nav-links">
+    <a href="/predict">Predict</a>
+    <a href="/matches" class="active">Matches</a>
+    <a href="/tournament">Tournament</a>
+    <a href="/leaderboard">Leaderboard</a>
+    <a href="/teams">Teams</a>
+    
+    {% if logged_in %}
+        {% if is_admin %}
+            <span class="user-name admin">⚙ {{ session['username'] }}</span>
+        {% else %}
+            <span class="user-name">{{ session['username'] }}</span>
+        {% endif %}
+        <a href="/logout" class="logout-link">Log out</a>
+    {% else %}
+        <span>Profile</span>
+    {% endif %}
+  </div>
+</div>
+
+<div class="tournament-bracket">
+
+  <!-- ================= UPPER ================= -->
+  <div class="bracket-section upper-section">
+    <h2>Upper Bracket</h2>
+    <div class="bracket-container">
+      <svg class="connector-layer"></svg>
+
+      {% for round_name, matches in upper_rounds.items() %}
+      <div class="bracket-col 
+           {% if round_name == 'Upper Quarterfinals' %}upper-quarter{% endif %} 
+           {% if round_name == 'Upper Semifinals' %}upper-semi{% endif %} 
+           {% if round_name == 'Upper Final' %}upper-final{% endif %}">
+        
+        <div class="bracket-col-label">{{ round_name }}</div>
+
+        {% for m in matches %}
+        <div class="bracket-item">
+
+          <div class="bracket-item-team {% if m.winner == m.team1 %}winner {% elif m.winner %}loser{% endif %}">
+            {% if m.team1 and m.team1 in team_logos %}
+                <img src="{{ team_logos[m.team1].Logo }}" class="bracket-logo">
+                <span class="team-name">{{ team_logos[m.team1].Teamname }}</span>
+            {% else %}
+                <span class="team-name">{{ m.team1 or "TBD" }}</span>
+            {% endif %}
+            <span class="score">{{ m.score1 or "" }}</span>
+          </div>
+
+          <div class="bracket-item-team {% if m.winner == m.team2 %}winner {% elif m.winner %}loser{% endif %}">
+            {% if m.team2 and m.team2 in team_logos %}
+                <img src="{{ team_logos[m.team2].Logo }}" class="bracket-logo">
+                <span class="team-name">{{ team_logos[m.team2].Teamname }}</span>
+            {% else %}
+                <span class="team-name">{{ m.team2 or "TBD" }}</span>
+            {% endif %}
+            <span class="score">{{ m.score2 or "" }}</span>
+          </div>
+
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ================= LOWER ================= -->
+  <div class="bracket-section lower-section">
+    <div class="bracket-container">
+      <svg class="connector-layer"></svg>
+
+      {% for round_name, matches in lower_rounds.items() %}
+      <div class="bracket-col 
+           {% if round_name == 'Lower Round 1' %}lower-round-1{% endif %} 
+           {% if round_name == 'Lower Round 2' %}lower-round-2{% endif %} 
+           {% if round_name == 'Lower Round 3' %}lower-round-3{% endif %} 
+           {% if round_name == 'Lower Final' %}lower-final{% endif %}">
+        
+        <div class="bracket-col-label">{{ round_name }}</div>
+
+        {% for m in matches %}
+        <div class="bracket-item">
+
+          <div class="bracket-item-team {% if m.winner == m.team1 %}winner {% elif m.winner %}loser{% endif %}">
+            {% if m.team1 and m.team1 in team_logos %}
+                <img src="{{ team_logos[m.team1].Logo }}" class="bracket-logo">
+                <span class="team-name">{{ team_logos[m.team1].Teamname }}</span>
+            {% else %}
+                <span class="team-name">{{ m.team1 or "TBD" }}</span>
+            {% endif %}
+            <span class="score">{{ m.score1 or "" }}</span>
+          </div>
+
+          <div class="bracket-item-team {% if m.winner == m.team2 %}winner {% elif m.winner %}loser{% endif %}">
+            {% if m.team2 and m.team2 in team_logos %}
+                <img src="{{ team_logos[m.team2].Logo }}" class="bracket-logo">
+                <span class="team-name">{{ team_logos[m.team2].Teamname }}</span>
+            {% else %}
+                <span class="team-name">{{ m.team2 or "TBD" }}</span>
+            {% endif %}
+            <span class="score">{{ m.score2 or "" }}</span>
+          </div>
+
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ================= GRAND FINAL ================= -->
+  <div class="bracket-section grand-final-section">
+    <div class="bracket-container">
+      <svg class="connector-layer"></svg>
+
+      {% for round_name, matches in grand_rounds.items() %}
+      <div class="bracket-col grand-final">
+        <div class="bracket-col-label">{{ round_name }}</div>
+
+        {% for m in matches %}
+        <div class="bracket-item">
+
+          <div class="bracket-item-team {% if m.winner == m.team1 %}winner {% elif m.winner %}loser{% endif %}">
+            {% if m.team1 and m.team1 in team_logos %}
+                <img src="{{ team_logos[m.team1].Logo }}" class="bracket-logo">
+                <span class="team-name">{{ team_logos[m.team1].Teamname }}</span>
+            {% else %}
+                <span class="team-name">{{ m.team1 or "TBD" }}</span>
+            {% endif %}
+            <span class="score">{{ m.score1 or "" }}</span>
+          </div>
+
+          <div class="bracket-item-team {% if m.winner == m.team2 %}winner {% elif m.winner %}loser{% endif %}">
+            {% if m.team2 and m.team2 in team_logos %}
+                <img src="{{ team_logos[m.team2].Logo }}" class="bracket-logo">
+                <span class="team-name">{{ team_logos[m.team2].Teamname }}</span>
+            {% else %}
+                <span class="team-name">{{ m.team2 or "TBD" }}</span>
+            {% endif %}
+            <span class="score">{{ m.score2 or "" }}</span>
+          </div>
+
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+
+<script>
+function drawConnectors(container) {
+  const svg = container.querySelector(".connector-layer");
+  svg.innerHTML = "";
+  const cols = container.querySelectorAll(".bracket-col");
+
+  for (let i = 0; i < cols.length - 1; i++) {
+    const currentMatches = cols[i].querySelectorAll(".bracket-item");
+    const nextMatches = cols[i + 1].querySelectorAll(".bracket-item");
+
+    currentMatches.forEach((match, index) => {
+      const target = nextMatches[Math.floor(index / 2)];
+      if (!target) return;
+
+      const parentRect = container.getBoundingClientRect();
+      const matchRect = match.getBoundingClientRect();
+      const targetRect = target.getBoundingClientRect();
+
+      const x1 = matchRect.right - parentRect.left;
+      const y1 = matchRect.top + matchRect.height / 2 - parentRect.top;
+      const x2 = targetRect.left - parentRect.left;
+      const y2 = targetRect.top + targetRect.height / 2 - parentRect.top;
+      const midX = x1 + (x2 - x1) / 2;
+
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", `M ${x1} ${y1} H ${midX} V ${y2} H ${x2}`);
+      path.setAttribute("stroke", "#ff2a2a");
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke-width", "2");
+      svg.appendChild(path);
+    });
+  }
+}
+
+function initBrackets() {
+  document.querySelectorAll(".bracket-container").forEach(drawConnectors);
+}
+
+window.addEventListener("load", initBrackets);
+window.addEventListener("resize", initBrackets);
+</script>
+
+</body>
+</html>
