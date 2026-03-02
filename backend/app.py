@@ -275,6 +275,64 @@ def admin_update_match():
 
     return {"status": "success"}
 
+@app.route("/leaderboard")
+def leaderboard_page():
+    result_col = get_mongo_collection("pickem_matches")
+    results = list(result_col.find())
+    winners = {r["match_id"]: r.get("winner") for r in results if r.get("winner")}
+
+    conn = get_mysql_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("SELECT Shortname, Teamname FROM Team")
+    teams = cursor.fetchall()
+    name_to_short = {}
+    for t in teams:
+        name_to_short[t["Teamname"]] = t["Shortname"]
+        name_to_short[t["Shortname"]] = t["Shortname"]
+
+    cursor.execute("""
+        SELECT u.Username, pd.Match_id, pd.Predict_Winner
+        FROM User u
+        LEFT JOIN Pickem_DATA pd ON u.User_id = pd.User_id
+    """)
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    scores = {}
+    for row in rows:
+        uname = row["Username"]
+        if uname not in scores:
+            scores[uname] = {"Username": uname, "CorrectPicks": 0, "Score": 0}
+        if row["Match_id"] and row["Predict_Winner"]:
+            actual_winner = winners.get(row["Match_id"])
+            predicted_short = name_to_short.get(row["Predict_Winner"], row["Predict_Winner"])
+            actual_short    = name_to_short.get(actual_winner, actual_winner)
+            if actual_short and predicted_short == actual_short:
+                scores[uname]["CorrectPicks"] += 1
+                scores[uname]["Score"] += 10
+
+    leaderboard = sorted(scores.values(), key=lambda x: x["Score"], reverse=True)
+
+    user_rank = None
+    user_score = None
+    if "username" in session:
+        for i, entry in enumerate(leaderboard):
+            if entry["Username"] == session["username"]:
+                user_rank = i + 1
+                user_score = entry["Score"]
+                break
+
+    return render_template(
+        "leaderboard.html",
+        leaderboard=leaderboard,
+        logged_in=("user_id" in session),
+        username=session.get("username"),
+        is_admin=(session.get("username") == "ADMIN"),
+        user_rank=user_rank,
+        user_score=user_score
+    )
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
