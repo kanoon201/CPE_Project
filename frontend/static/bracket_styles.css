@@ -48,6 +48,13 @@ body {
   pointer-events: none;
 }
 
+/* MATCH BOX WRAPPER (bracket-item + pts-bar) */
+.bracket-item-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
 /* MATCH BOX */
 .bracket-item {
   width: 220px;
@@ -100,7 +107,7 @@ body {
   gap: 160px;
 }
 
-.upper-semi .bracket-item {
+.upper-semi .bracket-item-wrap {
   transform: translateX(-100px);
 }
 
@@ -108,7 +115,7 @@ body {
   margin-top: 180px;
 }
 
-.upper-final .bracket-item {
+.upper-final .bracket-item-wrap {
   transform: translateX(-200px);
 }
 
@@ -156,11 +163,11 @@ body {
   top: -50px;
 }
 
-.lower-round-2 .bracket-item {
+.lower-round-2 .bracket-item-wrap {
   transform: translateX(-100px);
 }
 
-.lower-round-3 .bracket-item {
+.lower-round-3 .bracket-item-wrap {
   transform: translateX(-200px);
 }
 
@@ -169,7 +176,7 @@ body {
   top: -50px;
 }
 
-.lower-final .bracket-item {
+.lower-final .bracket-item-wrap {
   transform: translateX(-250px);
 }
 

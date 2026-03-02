@@ -1,5 +1,5 @@
 /* ── Google Fonts ── */
-@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap');
 
 /* ── Reset ── */
 *, *::before, *::after {
@@ -23,7 +23,7 @@
 
 /* ── Body ── */
 body {
-    font-family: 'Rajdhani', sans-serif;
+    font-family: 'Inter', sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
@@ -220,13 +220,15 @@ form {
 }
 
 label {
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.18em;
+    font-size: 0.72rem;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.12em;
     color: var(--muted);
     display: flex;
     align-items: center;
     gap: 6px;
+    text-transform: uppercase;
 }
 
 label::first-letter {
@@ -244,9 +246,9 @@ input {
     border: 1px solid #1a0000;
     border-bottom: 2px solid #1a0000;
     padding: 0.8rem 1rem;
-    font-size: 0.9rem;
-    font-family: 'Rajdhani', sans-serif;
-    font-weight: 500;
+    font-size: 0.95rem;
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
     color: var(--text);
     outline: none;
     border-radius: 2px;
@@ -294,10 +296,11 @@ input:focus ~ .input-line {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 0.82rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
     font-weight: 700;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
     text-decoration: none;
     border: none;
     cursor: pointer;
@@ -356,10 +359,11 @@ input:focus ~ .input-line {
 }
 
 .footer-note {
-    font-size: 0.6rem;
-    letter-spacing: 0.1em;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
     color: var(--muted);
-    font-weight: 600;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
 }
 
 /* ── Animations ── */

@@ -44,6 +44,60 @@
         color: #7bb8e8;
         font-size: 0.85em;
       }
+
+      /* ── POINTS BAR — อยู่นอกกล่อง ใต้กล่อง ── */
+      .bracket-item-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .bracket-pts-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 220px;          /* ตรงกับ .bracket-item width */
+        padding: 3px 10px;
+        margin-top: 4px;
+        border-radius: 4px;
+        border: 1px solid #1a0000;
+        background: #0d0000;
+        font-family: 'Inter', 'Rajdhani', sans-serif;
+      }
+      .pts-label {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.15em;
+        color: #444;
+        text-transform: uppercase;
+      }
+      .pts-value {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+      }
+
+      /* ถูกทั้งทีมและสกอร์ → เขียว */
+      .pts-full .pts-label { color: rgba(0,185,70,0.7); }
+      .pts-full .pts-value  { color: #00b946; }
+      .pts-full { border-top-color: rgba(0,185,70,0.2); background: rgba(0,185,70,0.06); }
+
+      /* ถูกทีม สกอร์ผิด → เหลือง */
+      .pts-half .pts-label { color: rgba(210,170,0,0.7); }
+      .pts-half .pts-value  { color: #d2aa00; }
+      .pts-half { border-top-color: rgba(210,170,0,0.2); background: rgba(210,170,0,0.06); }
+
+      /* ทายผิด → แดง */
+      .pts-zero .pts-label { color: rgba(200,30,30,0.7); }
+      .pts-zero .pts-value  { color: #c81e1e; }
+      .pts-zero { border-top-color: rgba(200,30,30,0.2); background: rgba(200,30,30,0.06); }
+
+      /* ยังไม่มีผล → เทา */
+      .pts-pending .pts-value { color: #3a3a3a; }
+      .pts-tbd { color: #3a3a3a !important; }
+
+      /* ไม่ได้ทาย → dim มาก */
+      .pts-nopick .pts-label { color: #2a2a2a; }
+      .pts-nopick .pts-value  { color: #2a2a2a; }
     </style>
 </head>
 <body>
@@ -117,6 +171,20 @@
 {% set p = user_predictions.get(m.match_id) if user_predictions is defined else none %}
 {% set pred_scores = p.Predict_Score.split('-') if p and p.Predict_Score else [] %}
 
+{# --- ROUND MULTIPLIER --- #}
+{%- set round_mul = {
+  "Upper Quarterfinals": 1,
+  "Lower Round 1":       1,
+  "Upper Semifinals":    2,
+  "Lower Round 2":       2,
+  "Lower Round 3":       4,
+  "Upper Final":         4,
+  "Lower Final":         8,
+  "Grand Final":         16
+} -%}
+{%- set mul = round_mul.get(m.round, 1) -%}
+{%- set max_pts = 10 * mul -%}
+
 {# --- คำนวณ highlight class สำหรับแต่ละ row --- #}
 {% if m.status == "completed" and p %}
   {%- set t1_full = team_logos[m.team1].Teamname if m.team1 in team_logos else m.team1 -%}
@@ -130,6 +198,18 @@
     )
   -%}
   {%- set score_correct = (p.Predict_Score == m.score) -%}
+
+  {# คะแนนที่ได้จริง #}
+  {%- if winner_correct and score_correct -%}
+    {%- set earned_pts = 10 * mul -%}
+    {%- set pts_class = "pts-full" -%}
+  {%- elif winner_correct -%}
+    {%- set earned_pts = 5 * mul -%}
+    {%- set pts_class = "pts-half" -%}
+  {%- else -%}
+    {%- set earned_pts = 0 -%}
+    {%- set pts_class = "pts-zero" -%}
+  {%- endif -%}
 
   {# team1 row class #}
   {%- set t1_is_winner = (aw == m.team1 or aw == t1_full) -%}
@@ -157,43 +237,66 @@
 {% else %}
   {%- set row1_class = "" -%}
   {%- set row2_class = "" -%}
+  {%- set earned_pts = none -%}
+  {%- set pts_class = "pts-pending" -%}
 {% endif %}
 
-<div class="bracket-item" {% if m.status == "completed" %}data-completed="1"{% endif %}>
+<div class="bracket-item-wrap">
 
-  <div class="bracket-item-team {{ row1_class }}">
-    {% if m.team1 and m.team1 in team_logos %}
-        <img src="{{ team_logos[m.team1].Logo }}" class="bracket-logo">
-        <span class="team-name">{{ team_logos[m.team1].Teamname }}</span>
-    {% else %}
-        <span class="team-name">{{ m.team1 or "TBD" }}</span>
-    {% endif %}
+  <div class="bracket-item" {% if m.status == "completed" %}data-completed="1"{% endif %}>
+
+    <div class="bracket-item-team {{ row1_class }}">
+      {% if m.team1 and m.team1 in team_logos %}
+          <img src="{{ team_logos[m.team1].Logo }}" class="bracket-logo">
+          <span class="team-name">{{ team_logos[m.team1].Teamname }}</span>
+      {% else %}
+          <span class="team-name">{{ m.team1 or "TBD" }}</span>
+      {% endif %}
+      {% if m.status == "completed" %}
+        <span class="score">{{ scores[0] if scores else "" }}</span>
+      {% elif m.status == "upcoming" and pred_scores %}
+        <span class="score">{{ pred_scores[0] }}</span>
+      {% else %}
+        <span class="score"></span>
+      {% endif %}
+    </div>
+
+    <div class="bracket-item-team {{ row2_class }}">
+      {% if m.team2 and m.team2 in team_logos %}
+          <img src="{{ team_logos[m.team2].Logo }}" class="bracket-logo">
+          <span class="team-name">{{ team_logos[m.team2].Teamname }}</span>
+      {% else %}
+          <span class="team-name">{{ m.team2 or "TBD" }}</span>
+      {% endif %}
+      {% if m.status == "completed" %}
+        <span class="score">{{ scores[1] if scores|length > 1 else "" }}</span>
+      {% elif m.status == "upcoming" and pred_scores|length > 1 %}
+        <span class="score">{{ pred_scores[1] }}</span>
+      {% else %}
+        <span class="score"></span>
+      {% endif %}
+    </div>
+
+  </div>{# end .bracket-item #}
+
+  {# ── POINTS BAR — อยู่นอกกล่อง ใต้กล่อง ── #}
+  {% if p %}
+  <div class="bracket-pts-bar {{ pts_class }}">
+    <span class="pts-label">POINTS</span>
     {% if m.status == "completed" %}
-      <span class="score">{{ scores[0] if scores else "" }}</span>
-    {% elif m.status == "upcoming" and pred_scores %}
-      <span class="score">{{ pred_scores[0] }}</span>
+      <span class="pts-value">{{ earned_pts }} / {{ max_pts }}</span>
     {% else %}
-      <span class="score"></span>
+      <span class="pts-value pts-tbd">? / {{ max_pts }}</span>
     {% endif %}
   </div>
-
-  <div class="bracket-item-team {{ row2_class }}">
-    {% if m.team2 and m.team2 in team_logos %}
-        <img src="{{ team_logos[m.team2].Logo }}" class="bracket-logo">
-        <span class="team-name">{{ team_logos[m.team2].Teamname }}</span>
-    {% else %}
-        <span class="team-name">{{ m.team2 or "TBD" }}</span>
-    {% endif %}
-    {% if m.status == "completed" %}
-      <span class="score">{{ scores[1] if scores|length > 1 else "" }}</span>
-    {% elif m.status == "upcoming" and pred_scores|length > 1 %}
-      <span class="score">{{ pred_scores[1] }}</span>
-    {% else %}
-      <span class="score"></span>
-    {% endif %}
+  {% elif user_predictions is defined %}
+  <div class="bracket-pts-bar pts-nopick">
+    <span class="pts-label">POINTS</span>
+    <span class="pts-value">— / {{ max_pts }}</span>
   </div>
+  {% endif %}
 
-</div>
+</div>{# end .bracket-item-wrap #}
 {% endmacro %}
 
 <div class="navbar">
@@ -290,21 +393,23 @@ function drawConnectors(container) {
   const cols = container.querySelectorAll(".bracket-col");
 
   for (let i = 0; i < cols.length - 1; i++) {
-    const currentMatches = cols[i].querySelectorAll(".bracket-item");
-    const nextMatches = cols[i + 1].querySelectorAll(".bracket-item");
+    // หา .bracket-item จริง (ไม่รวม pts-bar) ใน col นั้น
+    const currentItems = cols[i].querySelectorAll(".bracket-item");
+    const nextItems    = cols[i + 1].querySelectorAll(".bracket-item");
 
-    currentMatches.forEach((match, index) => {
-      const target = nextMatches[Math.floor(index / 2)];
+    currentItems.forEach((match, index) => {
+      const target = nextItems[Math.floor(index / 2)];
       if (!target) return;
 
       const parentRect = container.getBoundingClientRect();
-      const matchRect = match.getBoundingClientRect();
+      const matchRect  = match.getBoundingClientRect();
       const targetRect = target.getBoundingClientRect();
 
-      const x1 = matchRect.right - parentRect.left;
-      const y1 = matchRect.top + matchRect.height / 2 - parentRect.top;
-      const x2 = targetRect.left - parentRect.left;
-      const y2 = targetRect.top + targetRect.height / 2 - parentRect.top;
+      // x1 = ขอบขวาของกล่อง, y1 = กึ่งกลางความสูงกล่อง (ไม่รวม pts bar)
+      const x1   = matchRect.right  - parentRect.left;
+      const y1   = matchRect.top + matchRect.height / 2 - parentRect.top;
+      const x2   = targetRect.left  - parentRect.left;
+      const y2   = targetRect.top + targetRect.height / 2 - parentRect.top;
       const midX = x1 + (x2 - x1) / 2;
 
       const path = document.createElementNS("http://www.w3.org/2000/svg", "path");

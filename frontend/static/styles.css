@@ -1,5 +1,5 @@
 /* ── Google Fonts ── */
-@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap');
 
 
 
@@ -7,7 +7,7 @@
     margin:0;
     padding:0;
     box-sizing:border-box;
-    font-family:'Orbitron',sans-serif;
+    font-family:'Inter',sans-serif;
   }
   
   body{
@@ -41,12 +41,22 @@
     font-weight:700;
     color:#ff2a2a;
     letter-spacing:2px;
+    font-family:'Orbitron',sans-serif;
+  }
+
+  .header h1{
+    font-size:40px;
+    color:#ff2a2a;
+    margin-bottom:10px;
+    font-family:'Orbitron',sans-serif;
   }
   
   .nav-links{
       display:flex;
       gap:30px;
       font-size:14px;
+      font-family:'Inter',sans-serif;
+      font-weight: 500;
   }
 
   .nav-links a {
@@ -77,12 +87,6 @@
   /* HEADER */
   .header{
     padding:60px;
-  }
-  
-  .header h1{
-    font-size:40px;
-    color:#ff2a2a;
-    margin-bottom:10px;
   }
   
   .tabs{
@@ -164,10 +168,10 @@
     background: #0e0e0e;
   }
   .match-card-header h4 {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 3px;
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
     color: #555;
     white-space: nowrap;
     overflow: hidden;
@@ -239,10 +243,10 @@
 
   /* ── Team Name ── big, readable, no overflow */
   .team1, .team2 {
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 22px;
+    font-family: 'Inter', sans-serif;
+    font-size: 20px;
     font-weight: 700;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     color: #f0f0f0;
     text-align: center;
     line-height: 1.1;
@@ -250,71 +254,44 @@
     word-break: break-word;
   }
 
-  /* TBD / source hint */
-  .team-src-text {
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    line-height: 1.5;
-    color: #3a3a3a;
-    text-align: center;
-  }
-  .team-src-text .src-match {
-    color: #aa5500;
-    font-size: 13px;
-  }
-
   .vs-text {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 10px;
-    font-weight: 900;
-    letter-spacing: 3px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2px;
     color: #2e2e2e;
     flex-shrink: 0;
     width: 36px;
     text-align: center;
-    padding-bottom: 30px; /* align with logo vertical center */
+    padding-bottom: 30px;
   }
-
-  /* ── Divider ── */
-  .match-divider {
-    height: 1px;
-    background: #1e1e1e;
-    margin: 0 18px;
-  }
-
-  /* ── Status Area ── */
-  .match-status { padding: 16px 18px 20px; }
 
   .status-pending {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 9px;
-    letter-spacing: 3px;
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    letter-spacing: 2px;
     color: #2a2a2a;
     text-align: center;
     padding: 10px 0;
   }
   .status-waiting {
-    font-family: 'Rajdhani', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 14px;
     font-weight: 600;
-    letter-spacing: 2px;
+    letter-spacing: 1px;
     color: #664400;
     text-align: center;
     padding: 8px 0;
   }
 
-  /* Completed */
-  .status-completed { text-align: center; }
   .completed-badge {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 9px;
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
     font-weight: 700;
-    letter-spacing: 3px;
+    letter-spacing: 2px;
     color: #00cc66;
     background: #00cc6615;
     border: 1px solid #00cc6633;
@@ -324,31 +301,24 @@
   }
   .final-score {
     font-family: 'Rajdhani', sans-serif;
-    font-size: 28px;
+    font-size: 32px;
     font-weight: 700;
     color: #fff;
     letter-spacing: 2px;
     margin: 4px 0;
   }
-  .final-score .score-sep { color: #444; margin: 0 8px; }
   .winner-label {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 9px;
-    letter-spacing: 3px;
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    letter-spacing: 2px;
     color: #444;
     margin-bottom: 14px;
   }
-  .winner-name { color: #ff3333; font-weight: 700; }
 
-  .prediction-section {
-    border-top: 1px solid #1e1e1e;
-    padding-top: 14px;
-    margin-top: 4px;
-  }
   .prediction-label {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 8px;
-    letter-spacing: 3px;
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    letter-spacing: 2px;
     color: #333;
     margin-bottom: 8px;
     text-align: center;
@@ -414,8 +384,8 @@
     margin: 0;
     background: #ff2a2a;
     color: #fff;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 2px;
     padding: 13px 20px;
@@ -423,6 +393,7 @@
     border-radius: 10px;
     cursor: pointer;
     transition: background .2s, color .2s, box-shadow .2s;
+    text-transform: uppercase;
   }
   .submit-btn:hover {
     background: #fff;
