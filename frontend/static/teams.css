@@ -1,0 +1,347 @@
+/* ── Google Fonts ── */
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap');
+
+/* ── Variables ── */
+:root {
+  --red:      #ff2a2a;
+  --red-dark: #8b0000;
+  --red-glow: rgba(255, 42, 42, 0.3);
+  --bg:       #0b0b0b;
+  --surface:  #111111;
+  --card:     #140000;
+  --border:   #2a0000;
+  --text:     #ece8e1;
+  --muted:    #666666;
+  --gold:     #ffd700;
+  --silver:   #c0c0c0;
+  --bronze:   #cd7f32;
+}
+
+/* ── Body ── */
+body {
+  font-family: 'Rajdhani', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,42,42,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,42,42,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Page Header ── */
+.teams-header {
+  padding: 40px 60px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  position: relative;
+  z-index: 1;
+}
+
+.teams-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 2.8rem;
+  font-weight: 900;
+  color: var(--red);
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 30px rgba(255,42,42,0.5);
+  margin: 0;
+}
+
+.teams-subtitle {
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  color: var(--muted);
+  margin-top: 6px;
+  font-weight: 600;
+}
+
+.teams-badge {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--red);
+  border: 1px solid var(--red);
+  padding: 6px 16px;
+  letter-spacing: 0.15em;
+  clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+  background: rgba(255,42,42,0.08);
+}
+
+/* ── Live Bar ── */
+.live-bar {
+  padding: 0 60px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--red);
+  display: inline-block;
+  animation: blink 1.5s ease-in-out infinite;
+  box-shadow: 0 0 6px var(--red);
+}
+
+.live-text {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+}
+
+.live-updated {
+  font-size: 0.62rem;
+  color: #444;
+  margin-left: 6px;
+  letter-spacing: 0.05em;
+}
+
+/* ── Table Section ── */
+.teams-section {
+  padding: 0 60px 60px;
+  position: relative;
+  z-index: 1;
+}
+
+.teams-table-wrap {
+  width: 100%;
+}
+
+/* Header row */
+.teams-table-header {
+  display: grid;
+  grid-template-columns: 70px 80px 1fr 90px 160px 60px 60px 90px;
+  align-items: center;
+  padding: 10px 20px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 6px;
+}
+
+.teams-table-header span {
+  display: flex;
+  align-items: center;
+}
+
+.th-wins, .th-losses, .th-points {
+  justify-content: center;
+  text-align: center;
+}
+
+.th-short, .th-region, .th-place, .th-team {
+  text-align: left;
+}
+
+.th-logo {
+  padding-left: 4px;
+}
+
+/* Team row */
+.team-row {
+  display: grid;
+  grid-template-columns: 70px 80px 1fr 90px 160px 60px 60px 90px;
+  align-items: center;
+  padding: 12px 20px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 3px solid transparent;
+  margin-bottom: 5px;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+  animation: rowIn 0.5s ease both;
+  position: relative;
+}
+
+.team-row:hover {
+  border-left-color: var(--red);
+  background: #1c0000;
+  transform: translateX(4px);
+  box-shadow: 0 0 20px rgba(255,42,42,0.08);
+}
+
+/* First place highlight */
+.team-row.rank-first {
+  border-left-color: var(--gold);
+  background: linear-gradient(90deg, rgba(255,215,0,0.06) 0%, var(--card) 50%);
+  border-color: rgba(255,215,0,0.2);
+  border-left-color: var(--gold);
+}
+
+/* Flash animation for live updates */
+.team-row.flash {
+  animation: flash 1s ease-out;
+}
+
+/* ── Cell Styles ── */
+.td-place {
+  display: flex;
+  align-items: center;
+}
+
+.place-badge {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 900;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.place-badge.gold   { background: rgba(255,215,0,0.15);  color: var(--gold);   border: 1px solid var(--gold);   box-shadow: 0 0 10px rgba(255,215,0,0.3); }
+.place-badge.silver { background: rgba(192,192,192,0.1); color: var(--silver); border: 1px solid var(--silver); }
+.place-badge.bronze { background: rgba(205,127,50,0.1);  color: var(--bronze); border: 1px solid var(--bronze); }
+
+.place-num {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-weight: 700;
+  padding-left: 8px;
+}
+
+/* Logo */
+.team-logo-wrap {
+  width: 46px;
+  height: 46px;
+  background: #222;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #333;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.team-row:hover .team-logo-wrap {
+  border-color: var(--red);
+  box-shadow: 0 0 12px var(--red-glow);
+}
+
+.team-logo-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.team-logo-placeholder {
+  width: 46px;
+  height: 46px;
+  background: #1a1a1a;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+}
+
+/* Team name */
+.td-team {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--text);
+}
+
+.rank-first .td-team {
+  color: var(--gold);
+}
+
+/* Tag */
+.td-short {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+}
+
+/* Region */
+.td-region {
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* Stats */
+.td-wins {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #4caf50;
+  text-align: center;
+}
+
+.td-losses {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #f44336;
+  text-align: center;
+}
+
+.td-points {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1rem;
+  font-weight: 900;
+  color: var(--red);
+  text-align: center;
+}
+
+.rank-first .td-points {
+  color: var(--gold);
+  text-shadow: 0 0 10px rgba(255,215,0,0.4);
+}
+
+/* ── Animations ── */
+@keyframes rowIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.2; }
+}
+
+@keyframes flash {
+  0%   { background: rgba(255,42,42,0.25); }
+  100% { background: var(--card); }
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .teams-header  { padding: 30px 20px 16px; flex-direction: column; align-items: flex-start; gap: 12px; }
+  .teams-section { padding: 0 16px 40px; }
+  .live-bar      { padding: 0 16px 12px; }
+  .teams-title   { font-size: 2rem; }
+
+  .teams-table-header,
+  .team-row {
+    grid-template-columns: 50px 60px 1fr 70px 50px 50px 70px;
+  }
+  .th-region, .td-region { display: none; }
+}

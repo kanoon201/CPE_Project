@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Matches</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='bracket_styles.css') }}">
+    <style>
+      /* ── Row highlight (ระบายทั้งแถว) ── */
+
+      /* ทายถูกทีม + สกอร์ถูก → เขียวสด (แถวทีมชนะ) */
+      .bracket-item-team.row-correct {
+        background: rgba(0, 185, 70, 0.30) !important;
+        border-bottom-color: rgba(0,185,70,0.25) !important;
+      }
+      /* ทายถูกทีม สกอร์ผิด → เหลือง (แถวทีมชนะ) */
+      .bracket-item-team.row-right-team {
+        background: rgba(210, 170, 0, 0.30) !important;
+        border-bottom-color: rgba(210,170,0,0.25) !important;
+      }
+      /* ทายทีมผิด → แดง (แถวทีมชนะจริง) */
+      .bracket-item-team.row-wrong {
+        background: rgba(200, 30, 30, 0.35) !important;
+        border-bottom-color: rgba(200,30,30,0.25) !important;
+      }
+      /* แถวทีมแพ้ (ไม่ได้ highlight) → หรี่ลง */
+      .bracket-item-team:not([class*="row-"]) {
+        opacity: 0.55;
+      }
+      /* แต่ถ้ายัง pending/upcoming ไม่ต้องหรี่ */
+      .bracket-item:not([data-completed]) .bracket-item-team:not([class*="row-"]) {
+        opacity: 1;
+      }
+
+      /* คะแนนที่ทาย (upcoming) → เทาอมฟ้า เส้นประ */
+      .score-predicted {
+        display: inline-block;
+        min-width: 20px;
+        text-align: center;
+        border-radius: 4px;
+        padding: 1px 6px;
+        font-weight: bold;
+        border: 2px dashed #5599cc;
+        background: rgba(85, 153, 204, 0.12);
+        color: #7bb8e8;
+        font-size: 0.85em;
+      }
+
+      /* ── POINTS BAR — อยู่นอกกล่อง ใต้กล่อง ── */
+      .bracket-item-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .bracket-pts-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 220px;          /* ตรงกับ .bracket-item width */
+        padding: 3px 10px;
+        margin-top: 4px;
+        border-radius: 4px;
+        border: 1px solid #1a0000;
+        background: #0d0000;
+        font-family: 'Inter', 'Rajdhani', sans-serif;
+      }
+      .pts-label {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.15em;
+        color: #444;
+        text-transform: uppercase;
+      }
+      .pts-value {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+      }
+
+      /* ถูกทั้งทีมและสกอร์ → เขียว */
+      .pts-full .pts-label { color: rgba(0,185,70,0.7); }
+      .pts-full .pts-value  { color: #00b946; }
+      .pts-full { border-top-color: rgba(0,185,70,0.2); background: rgba(0,185,70,0.06); }
+
+      /* ถูกทีม สกอร์ผิด → เหลือง */
+      .pts-half .pts-label { color: rgba(210,170,0,0.7); }
+      .pts-half .pts-value  { color: #d2aa00; }
+      .pts-half { border-top-color: rgba(210,170,0,0.2); background: rgba(210,170,0,0.06); }
+
+      /* ทายผิด → แดง */
+      .pts-zero .pts-label { color: rgba(200,30,30,0.7); }
+      .pts-zero .pts-value  { color: #c81e1e; }
+      .pts-zero { border-top-color: rgba(200,30,30,0.2); background: rgba(200,30,30,0.06); }
+
+      /* ยังไม่มีผล → เทา */
+      .pts-pending .pts-value { color: #3a3a3a; }
+      .pts-tbd { color: #3a3a3a !important; }
+
+      /* ไม่ได้ทาย → dim มาก */
+      .pts-nopick .pts-label { color: #2a2a2a; }
+      .pts-nopick .pts-value  { color: #2a2a2a; }
+    </style>
+</head>
+<body>
+
+{# ─────────────────────────────────────────────────────
+   MACRO: แสดง score พร้อม highlight
+   team_slot = 1 (team1) หรือ 2 (team2)
+   score_val = ตัวเลขคะแนน เช่น "2" หรือ "1"
+───────────────────────────────────────────────────── #}
+{% macro score_span(m, team_slot, score_val) %}
+{%- set p = user_predictions.get(m.match_id) if user_predictions is defined else none -%}
+{%- if m.status == "completed" and p and score_val != "" -%}
+  {%- set t1 = m.team1 -%}
+  {%- set t2 = m.team2 -%}
+  {%- set t1_full = team_logos[t1].Teamname if t1 in team_logos else t1 -%}
+  {%- set t2_full = team_logos[t2].Teamname if t2 in team_logos else t2 -%}
+  {%- set aw = m.winner -%}
+  {%- set pw = p.Predict_Winner -%}
+  {%- set ps = p.Predict_Score -%}
+
+  {# ทีมในช่องนี้ #}
+  {%- set this_team = t1 if team_slot == 1 else t2 -%}
+  {%- set this_full = team_logos[this_team].Teamname if this_team in team_logos else this_team -%}
+
+  {# ผู้ชนะจริงคือทีมในช่องนี้ไหม #}
+  {%- set this_is_winner = (aw == this_team or aw == this_full) -%}
+
+  {# user ทายทีมนี้ไหม #}
+  {%- set user_picked_this = (pw == this_team or pw == this_full) -%}
+
+  {# user ทายทีมถูกไหม (ทายชนะตรงกับผู้ชนะจริง) #}
+  {%- set winner_correct = (
+      (aw == t1 or aw == t1_full) and (pw == t1 or pw == t1_full)
+    ) or (
+      (aw == t2 or aw == t2_full) and (pw == t2 or pw == t2_full)
+    )
+  -%}
+
+  {%- if winner_correct and ps == m.score -%}
+    {# ถูกทั้งทีมและสกอร์ → เขียวรอบสกอร์ทีมที่ชนะ #}
+    {%- if this_is_winner -%}
+      <span class="score score-box-highlight score-correct">{{ score_val }}</span>
+    {%- else -%}
+      <span class="score">{{ score_val }}</span>
+    {%- endif -%}
+  {%- elif winner_correct and ps != m.score -%}
+    {# ถูกทีม แต่สกอร์ผิด → เหลืองรอบสกอร์ทีมที่ชนะ #}
+    {%- if this_is_winner -%}
+      <span class="score score-box-highlight score-right-team-wrong-score">{{ score_val }}</span>
+    {%- else -%}
+      <span class="score">{{ score_val }}</span>
+    {%- endif -%}
+  {%- else -%}
+    {# ทายทีมผิด → แดงรอบสกอร์ทีมที่ชนะจริง #}
+    {%- if this_is_winner -%}
+      <span class="score score-box-highlight score-wrong-team">{{ score_val }}</span>
+    {%- else -%}
+      <span class="score">{{ score_val }}</span>
+    {%- endif -%}
+  {%- endif -%}
+{%- else -%}
+  <span class="score">{{ score_val }}</span>
+{%- endif -%}
+{% endmacro %}
+
+{# ─────────────────────────────────────────────────────
+   MACRO: render bracket-item box ใช้ซ้ำกัน 3 จุด
+───────────────────────────────────────────────────── #}
+{% macro bracket_item(m) %}
+{% set scores = m.score.split('-') if m.score else [] %}
+{% set p = user_predictions.get(m.match_id) if user_predictions is defined else none %}
+{% set pred_scores = p.Predict_Score.split('-') if p and p.Predict_Score else [] %}
+
+{# --- ROUND MULTIPLIER --- #}
+{%- set round_mul = {
+  "Upper Quarterfinals": 1,
+  "Lower Round 1":       1,
+  "Upper Semifinals":    2,
+  "Lower Round 2":       2,
+  "Lower Round 3":       4,
+  "Upper Final":         4,
+  "Lower Final":         8,
+  "Grand Final":         16
+} -%}
+{%- set mul = round_mul.get(m.round, 1) -%}
+{%- set max_pts = 10 * mul -%}
+
+{# --- คำนวณ highlight class สำหรับแต่ละ row --- #}
+{% if m.status == "completed" and p %}
+  {%- set t1_full = team_logos[m.team1].Teamname if m.team1 in team_logos else m.team1 -%}
+  {%- set t2_full = team_logos[m.team2].Teamname if m.team2 in team_logos else m.team2 -%}
+  {%- set aw = m.winner -%}
+  {%- set pw = p.Predict_Winner -%}
+  {%- set winner_correct = (
+      (aw == m.team1 or aw == t1_full) and (pw == m.team1 or pw == t1_full)
+    ) or (
+      (aw == m.team2 or aw == t2_full) and (pw == m.team2 or pw == t2_full)
+    )
+  -%}
+  {%- set score_correct = (p.Predict_Score == m.score) -%}
+
+  {# คะแนนที่ได้จริง #}
+  {%- if winner_correct and score_correct -%}
+    {%- set earned_pts = 10 * mul -%}
+    {%- set pts_class = "pts-full" -%}
+  {%- elif winner_correct -%}
+    {%- set earned_pts = 5 * mul -%}
+    {%- set pts_class = "pts-half" -%}
+  {%- else -%}
+    {%- set earned_pts = 0 -%}
+    {%- set pts_class = "pts-zero" -%}
+  {%- endif -%}
+
+  {# team1 row class #}
+  {%- set t1_is_winner = (aw == m.team1 or aw == t1_full) -%}
+  {%- if winner_correct and score_correct and t1_is_winner -%}
+    {%- set row1_class = "row-correct" -%}
+  {%- elif winner_correct and not score_correct and t1_is_winner -%}
+    {%- set row1_class = "row-right-team" -%}
+  {%- elif not winner_correct and t1_is_winner -%}
+    {%- set row1_class = "row-wrong" -%}
+  {%- else -%}
+    {%- set row1_class = "" -%}
+  {%- endif -%}
+
+  {# team2 row class #}
+  {%- set t2_is_winner = (aw == m.team2 or aw == t2_full) -%}
+  {%- if winner_correct and score_correct and t2_is_winner -%}
+    {%- set row2_class = "row-correct" -%}
+  {%- elif winner_correct and not score_correct and t2_is_winner -%}
+    {%- set row2_class = "row-right-team" -%}
+  {%- elif not winner_correct and t2_is_winner -%}
+    {%- set row2_class = "row-wrong" -%}
+  {%- else -%}
+    {%- set row2_class = "" -%}
+  {%- endif -%}
+{% else %}
+  {%- set row1_class = "" -%}
+  {%- set row2_class = "" -%}
+  {%- set earned_pts = none -%}
+  {%- set pts_class = "pts-pending" -%}
+{% endif %}
+
+<div class="bracket-item-wrap">
+
+  <div class="bracket-item" {% if m.status == "completed" %}data-completed="1"{% endif %}>
+
+    <div class="bracket-item-team {{ row1_class }}">
+      {% if m.team1 and m.team1 in team_logos %}
+          <img src="{{ team_logos[m.team1].Logo }}" class="bracket-logo">
+          <span class="team-name">{{ team_logos[m.team1].Teamname }}</span>
+      {% else %}
+          <span class="team-name">{{ m.team1 or "TBD" }}</span>
+      {% endif %}
+      {% if m.status == "completed" %}
+        <span class="score">{{ scores[0] if scores else "" }}</span>
+      {% elif m.status == "upcoming" and pred_scores %}
+        <span class="score">{{ pred_scores[0] }}</span>
+      {% else %}
+        <span class="score"></span>
+      {% endif %}
+    </div>
+
+    <div class="bracket-item-team {{ row2_class }}">
+      {% if m.team2 and m.team2 in team_logos %}
+          <img src="{{ team_logos[m.team2].Logo }}" class="bracket-logo">
+          <span class="team-name">{{ team_logos[m.team2].Teamname }}</span>
+      {% else %}
+          <span class="team-name">{{ m.team2 or "TBD" }}</span>
+      {% endif %}
+      {% if m.status == "completed" %}
+        <span class="score">{{ scores[1] if scores|length > 1 else "" }}</span>
+      {% elif m.status == "upcoming" and pred_scores|length > 1 %}
+        <span class="score">{{ pred_scores[1] }}</span>
+      {% else %}
+        <span class="score"></span>
+      {% endif %}
+    </div>
+
+  </div>{# end .bracket-item #}
+
+  {# ── POINTS BAR — อยู่นอกกล่อง ใต้กล่อง ── #}
+  {% if p %}
+  <div class="bracket-pts-bar {{ pts_class }}">
+    <span class="pts-label">POINTS</span>
+    {% if m.status == "completed" %}
+      <span class="pts-value">{{ earned_pts }} / {{ max_pts }}</span>
+    {% else %}
+      <span class="pts-value pts-tbd">? / {{ max_pts }}</span>
+    {% endif %}
+  </div>
+  {% elif user_predictions is defined %}
+  <div class="bracket-pts-bar pts-nopick">
+    <span class="pts-label">POINTS</span>
+    <span class="pts-value">— / {{ max_pts }}</span>
+  </div>
+  {% endif %}
+
+</div>{# end .bracket-item-wrap #}
+{% endmacro %}
+
+<div class="navbar">
+  <div class="logo">PICK'EM</div>
+  <div class="nav-links">
+    <a href="/predict">Predict</a>
+    <a href="/matches" class="active">Matches</a>
+    <a href="/tournament">Tournament</a>
+    <a href="/leaderboard">Leaderboard</a>
+    <a href="/teams">Teams</a>
+    
+    {% if logged_in %}
+        {% if is_admin %}
+            <span class="user-name admin">⚙ {{ session['username'] }}</span>
+        {% else %}
+            <span class="user-name">{{ session['username'] }}</span>
+        {% endif %}
+        <a href="/logout" class="logout-link">Log out</a>
+    {% else %}
+        <span>Profile</span>
+    {% endif %}
+  </div>
+</div>
+
+<div class="tournament-bracket">
+
+  <!-- ================= UPPER ================= -->
+  <div class="bracket-section upper-section">
+    <h2>Upper Bracket</h2>
+    <div class="bracket-container">
+      <svg class="connector-layer"></svg>
+
+      {% for round_name, matches in upper_rounds.items() %}
+      <div class="bracket-col 
+           {% if round_name == 'Upper Quarterfinals' %}upper-quarter{% endif %} 
+           {% if round_name == 'Upper Semifinals' %}upper-semi{% endif %} 
+           {% if round_name == 'Upper Final' %}upper-final{% endif %}">
+        
+        <div class="bracket-col-label">{{ round_name }}</div>
+
+        {% for m in matches %}
+          {{ bracket_item(m) }}
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ================= LOWER ================= -->
+  <div class="bracket-section lower-section">
+    <div class="bracket-container">
+      <svg class="connector-layer"></svg>
+
+      {% for round_name, matches in lower_rounds.items() %}
+      <div class="bracket-col 
+           {% if round_name == 'Lower Round 1' %}lower-round-1{% endif %} 
+           {% if round_name == 'Lower Round 2' %}lower-round-2{% endif %} 
+           {% if round_name == 'Lower Round 3' %}lower-round-3{% endif %} 
+           {% if round_name == 'Lower Final' %}lower-final{% endif %}">
+        
+        <div class="bracket-col-label">{{ round_name }}</div>
+
+        {% for m in matches %}
+          {{ bracket_item(m) }}
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ================= GRAND FINAL ================= -->
+  <div class="bracket-section grand-final-section">
+    <div class="bracket-container">
+      <svg class="connector-layer"></svg>
+
+      {% for round_name, matches in grand_rounds.items() %}
+      <div class="bracket-col grand-final">
+        <div class="bracket-col-label">{{ round_name }}</div>
+
+        {% for m in matches %}
+          {{ bracket_item(m) }}
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+
+<script>
+function drawConnectors(container) {
+  const svg = container.querySelector(".connector-layer");
+  svg.innerHTML = "";
+  const cols = container.querySelectorAll(".bracket-col");
+
+  for (let i = 0; i < cols.length - 1; i++) {
+    // หา .bracket-item จริง (ไม่รวม pts-bar) ใน col นั้น
+    const currentItems = cols[i].querySelectorAll(".bracket-item");
+    const nextItems    = cols[i + 1].querySelectorAll(".bracket-item");
+
+    currentItems.forEach((match, index) => {
+      const target = nextItems[Math.floor(index / 2)];
+      if (!target) return;
+
+      const parentRect = container.getBoundingClientRect();
+      const matchRect  = match.getBoundingClientRect();
+      const targetRect = target.getBoundingClientRect();
+
+      // x1 = ขอบขวาของกล่อง, y1 = กึ่งกลางความสูงกล่อง (ไม่รวม pts bar)
+      const x1   = matchRect.right  - parentRect.left;
+      const y1   = matchRect.top + matchRect.height / 2 - parentRect.top;
+      const x2   = targetRect.left  - parentRect.left;
+      const y2   = targetRect.top + targetRect.height / 2 - parentRect.top;
+      const midX = x1 + (x2 - x1) / 2;
+
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", `M ${x1} ${y1} H ${midX} V ${y2} H ${x2}`);
+      path.setAttribute("stroke", "#ff2a2a");
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke-width", "2");
+      svg.appendChild(path);
+    });
+  }
+}
+
+function initBrackets() {
+  document.querySelectorAll(".bracket-container").forEach(drawConnectors);
+}
+
+window.addEventListener("load", initBrackets);
+window.addEventListener("resize", initBrackets);
+</script>
+
+</body>
+</html>
