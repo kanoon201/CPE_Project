@@ -208,7 +208,7 @@ def teams_page():
     cursor.execute("""
         SELECT Teamname, Shortname, Region, Logo, Wins, Losses, Points 
         FROM Team 
-        ORDER BY Points DESC
+        ORDER BY Points DESC, Wins DESC, Losses ASC
     """)
     teams = cursor.fetchall()
     cursor.close()
@@ -353,7 +353,7 @@ def teams_data():
     cursor = conn.cursor(dictionary=True)
     cursor.execute("""
         SELECT Teamname, Shortname, Region, Logo, Wins, Losses, Points
-        FROM Team ORDER BY Points DESC
+        FROM Team ORDER BY Points DESC, Wins DESC, Losses ASC
     """)
     teams = cursor.fetchall()
     cursor.close()
