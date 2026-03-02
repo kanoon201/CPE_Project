@@ -126,6 +126,7 @@ body::before {
 .teams-table-header {
   display: grid;
   grid-template-columns: 70px 80px 1fr 90px 160px 60px 60px 90px;
+  align-items: center;
   padding: 10px 20px;
   font-size: 0.65rem;
   font-weight: 700;
@@ -133,6 +134,24 @@ body::before {
   color: var(--muted);
   border-bottom: 1px solid var(--border);
   margin-bottom: 6px;
+}
+
+.teams-table-header span {
+  display: flex;
+  align-items: center;
+}
+
+.th-wins, .th-losses, .th-points {
+  justify-content: center;
+  text-align: center;
+}
+
+.th-short, .th-region, .th-place, .th-team {
+  text-align: left;
+}
+
+.th-logo {
+  padding-left: 4px;
 }
 
 /* Team row */

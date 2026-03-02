@@ -1,5 +1,5 @@
 /* ── Google Fonts ── */
-@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap');
 
 /* ── Variables (matches your site) ── */
 :root {
@@ -21,7 +21,7 @@
 body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'Rajdhani', sans-serif;
+    font-family: 'Inter', sans-serif;
     min-height: 100vh;
     padding-bottom: 80px;
 }
@@ -127,9 +127,10 @@ body::before {
 .rank-2 .podium-avatar { border-color: var(--silver); color: var(--silver); }
 
 .podium-name {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     font-weight: 700;
-    letter-spacing: 0.08em;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.03em;
     margin-bottom: 4px;
     text-transform: uppercase;
 }
@@ -189,12 +190,14 @@ body::before {
     display: grid;
     grid-template-columns: 80px 1fr 160px 140px;
     padding: 10px 24px;
-    font-size: 0.68rem;
+    font-size: 0.7rem;
     font-weight: 700;
-    letter-spacing: 0.2em;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.12em;
     color: var(--muted);
     border-bottom: 1px solid var(--border);
     margin-bottom: 6px;
+    text-transform: uppercase;
 }
 
 /* Each row */
@@ -247,29 +250,32 @@ body::before {
 /* Username */
 .lb-username {
     font-size: 1rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    font-family: 'Inter', sans-serif;
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
 .you-tag {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.55rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.6rem;
     font-weight: 700;
     color: var(--gold);
     border: 1px solid var(--gold);
     padding: 2px 6px;
-    letter-spacing: 0.15em;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
 }
 
 /* Correct picks */
 .lb-correct {
     font-size: 0.95rem;
     color: var(--muted);
-    font-weight: 600;
-    letter-spacing: 0.05em;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.01em;
 }
 
 /* Score */
