@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard – PICK'EM</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="/static/leaderboard.css">
+</head>
+<body>
+
+<!-- NAVBAR (match your existing site) -->
+<nav class="navbar">
+    <div class="logo">PICK'EM</div>
+    <div class="nav-links">
+        <span onclick="location.href='/predict'">Predict</span>
+        <span onclick="location.href='/matches'">Matches</span>
+        <span onclick="location.href='/tournament'">Tournament</span>
+        <span onclick="location.href='/leaderboard'" class="active">Leaderboard</span>
+        <span onclick="location.href='/teams'">Teams</span>
+        {% if logged_in %}
+            <span>{{ username }}</span>
+            <span onclick="location.href='/logout'">Log out</span>
+        {% else %}
+            <span onclick="location.href='/login'">Log in</span>
+        {% endif %}
+    </div>
+</nav>
+
+<!-- PAGE HEADER -->
+<div class="lb-header">
+    <div class="lb-title-wrap">
+        <h1 class="lb-title">LEADERBOARD</h1>
+        <p class="lb-subtitle">TOP PREDICTORS THIS SEASON</p>
+    </div>
+    <div class="lb-season-badge">VCT 2026</div>
+</div>
+
+<!-- TOP 3 PODIUM -->
+<div class="podium-section">
+    {% if leaderboard|length >= 2 %}
+    <div class="podium-card rank-2">
+        <div class="podium-rank">#2</div>
+        <div class="podium-avatar">{{ leaderboard[1].Username[0] | upper }}</div>
+        <div class="podium-name">{{ leaderboard[1].Username }}</div>
+        <div class="podium-score">{{ leaderboard[1].Score }} <span>PTS</span></div>
+        <div class="podium-block p2"></div>
+    </div>
+    {% endif %}
+
+    {% if leaderboard|length >= 1 %}
+    <div class="podium-card rank-1">
+        <div class="crown">♛</div>
+        <div class="podium-rank">#1</div>
+        <div class="podium-avatar gold">{{ leaderboard[0].Username[0] | upper }}</div>
+        <div class="podium-name">{{ leaderboard[0].Username }}</div>
+        <div class="podium-score">{{ leaderboard[0].Score }} <span>PTS</span></div>
+        <div class="podium-block p1"></div>
+    </div>
+    {% endif %}
+
+    {% if leaderboard|length >= 3 %}
+    <div class="podium-card rank-3">
+        <div class="podium-rank">#3</div>
+        <div class="podium-avatar bronze">{{ leaderboard[2].Username[0] | upper }}</div>
+        <div class="podium-name">{{ leaderboard[2].Username }}</div>
+        <div class="podium-score">{{ leaderboard[2].Score }} <span>PTS</span></div>
+        <div class="podium-block p3"></div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- FULL RANKINGS TABLE -->
+<div class="lb-table-section">
+    <div class="lb-table-header">
+        <span>RANK</span>
+        <span>AGENT</span>
+        <span>CORRECT PICKS</span>
+        <span>SCORE</span>
+    </div>
+
+    {% for entry in leaderboard %}
+    <div class="lb-row {% if loop.index <= 3 %}top-three{% endif %} {% if entry.Username == username %}is-you{% endif %}"
+         style="animation-delay: {{ loop.index * 0.05 }}s">
+        <span class="rank-num">
+            {% if loop.index == 1 %}
+                <span class="medal gold-m">🥇</span>
+            {% elif loop.index == 2 %}
+                <span class="medal">🥈</span>
+            {% elif loop.index == 3 %}
+                <span class="medal">🥉</span>
+            {% else %}
+                {{ loop.index }}
+            {% endif %}
+        </span>
+        <span class="lb-username">
+            {{ entry.Username }}
+            {% if entry.Username == username %}
+                <span class="you-tag">YOU</span>
+            {% endif %}
+        </span>
+        <span class="lb-correct">{{ entry.CorrectPicks }}</span>
+        <span class="lb-score">{{ entry.Score }} <span class="pts">PTS</span></span>
+    </div>
+    {% else %}
+    <div class="lb-empty">No predictions submitted yet. Be the first!</div>
+    {% endfor %}
+</div>
+
+<!-- YOUR RANK STICKY FOOTER (only if logged in and not in top view) -->
+{% if logged_in and user_rank %}
+<div class="your-rank-bar">
+    <span class="yr-label">YOUR RANK</span>
+    <span class="yr-rank">#{{ user_rank }}</span>
+    <span class="yr-name">{{ username }}</span>
+    <span class="yr-score">{{ user_score }} PTS</span>
+</div>
+{% endif %}
+
+</body>
+</html>

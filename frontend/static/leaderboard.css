@@ -1,0 +1,355 @@
+/* ── Google Fonts ── */
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap');
+
+/* ── Variables (matches your site) ── */
+:root {
+    --red:       #ff2a2a;
+    --red-dark:  #8b0000;
+    --red-glow:  rgba(255, 42, 42, 0.3);
+    --bg:        #0b0b0b;
+    --surface:   #111111;
+    --card:      #1a0000;
+    --border:    #2a0000;
+    --text:      #ffffff;
+    --muted:     #888888;
+    --gold:      #ffd700;
+    --silver:    #c0c0c0;
+    --bronze:    #cd7f32;
+}
+
+/* ── Page Layout ── */
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    padding-bottom: 80px;
+}
+
+/* subtle grid background */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255,42,42,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,42,42,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* ── Page Header ── */
+.lb-header {
+    padding: 40px 60px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    position: relative;
+    z-index: 1;
+}
+
+.lb-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.8rem;
+    font-weight: 900;
+    color: var(--red);
+    letter-spacing: 0.08em;
+    text-shadow: 0 0 30px rgba(255,42,42,0.5);
+    margin: 0;
+}
+
+.lb-subtitle {
+    font-size: 0.75rem;
+    letter-spacing: 0.25em;
+    color: var(--muted);
+    margin-top: 6px;
+    font-weight: 600;
+}
+
+.lb-season-badge {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--red);
+    border: 1px solid var(--red);
+    padding: 6px 16px;
+    letter-spacing: 0.15em;
+    clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+    background: rgba(255,42,42,0.08);
+}
+
+/* ── PODIUM ── */
+.podium-section {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 20;
+    padding: 20px 60px 0;
+    position: relative;
+    z-index: 1;
+}
+
+.podium-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.podium-rank {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+}
+
+.podium-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--card);
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--muted);
+    margin-bottom: 8px;
+}
+
+.podium-avatar.gold   { border-color: var(--gold);   color: var(--gold);   box-shadow: 0 0 20px rgba(255,215,0,0.4); }
+.podium-avatar.bronze { border-color: var(--bronze); color: var(--bronze); }
+
+.rank-2 .podium-avatar { border-color: var(--silver); color: var(--silver); }
+
+.podium-name {
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+}
+
+.podium-score {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    font-weight: 900;
+    color: var(--red);
+    margin-bottom: 12px;
+}
+
+.podium-score span {
+    font-size: 0.6rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+}
+
+/* Podium blocks */
+.podium-block {
+    width: 120px;
+    border-top: 2px solid var(--red);
+}
+
+.p1 { height: 80px;  background: linear-gradient(180deg, rgba(255,42,42,0.15) 0%, transparent 100%); }
+.p2 { height: 55px;  background: linear-gradient(180deg, rgba(255,42,42,0.08) 0%, transparent 100%); }
+.p3 { height: 35px;  background: linear-gradient(180deg, rgba(255,42,42,0.05) 0%, transparent 100%); }
+
+/* Crown for #1 */
+.crown {
+    font-size: 1.4rem;
+    margin-bottom: 4px;
+    animation: float 2.5s ease-in-out infinite;
+    filter: drop-shadow(0 0 8px rgba(255,215,0,0.6));
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-5px); }
+}
+
+/* rank-1 wider slot */
+.rank-1 { z-index: 2; margin: 0; }
+.rank-1 .podium-avatar { width: 68px; height: 68px; font-size: 1.6rem; }
+.rank-1 .podium-name   { font-size: 1rem; }
+.rank-1 .podium-score  { font-size: 1.2rem; }
+
+/* ── TABLE SECTION ── */
+.lb-table-section {
+    margin: 30px 60px 20px;
+    position: relative;
+    z-index: 1;
+}
+
+/* Table header row */
+.lb-table-header {
+    display: grid;
+    grid-template-columns: 80px 1fr 160px 140px;
+    padding: 10px 24px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 6px;
+}
+
+/* Each row */
+.lb-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 160px 140px;
+    align-items: center;
+    padding: 14px 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-left: 3px solid transparent;
+    margin-bottom: 6px;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    animation: rowIn 0.4s ease both;
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
+}
+
+@keyframes rowIn {
+    from { opacity: 0; transform: translateX(-16px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+.lb-row:hover {
+    border-left-color: var(--red);
+    background: #1f0000;
+    transform: translateX(4px);
+}
+
+.lb-row.top-three {
+    border-left-color: var(--red);
+    background: linear-gradient(90deg, rgba(255,42,42,0.08) 0%, var(--card) 40%);
+}
+
+/* Highlight current user */
+.lb-row.is-you {
+    border-left-color: var(--gold) !important;
+    background: linear-gradient(90deg, rgba(255,215,0,0.07) 0%, var(--card) 40%) !important;
+}
+
+/* Rank number */
+.rank-num {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--muted);
+}
+
+.medal { font-size: 1.2rem; }
+
+/* Username */
+.lb-username {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.you-tag {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.55rem;
+    font-weight: 700;
+    color: var(--gold);
+    border: 1px solid var(--gold);
+    padding: 2px 6px;
+    letter-spacing: 0.15em;
+}
+
+/* Correct picks */
+.lb-correct {
+    font-size: 0.95rem;
+    color: var(--muted);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
+/* Score */
+.lb-score {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    font-weight: 900;
+    color: var(--red);
+}
+
+.pts {
+    font-size: 0.6rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    margin-left: 3px;
+}
+
+/* Empty state */
+.lb-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+    font-size: 0.9rem;
+    letter-spacing: 0.1em;
+    border: 1px dashed var(--border);
+}
+
+/* ── YOUR RANK STICKY BAR ── */
+.your-rank-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(90deg, #1a0000, #0b0b0b);
+    border-top: 2px solid var(--red);
+    padding: 14px 60px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    z-index: 100;
+    box-shadow: 0 -4px 30px rgba(255,42,42,0.15);
+}
+
+.yr-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    font-weight: 700;
+}
+
+.yr-rank {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: var(--red);
+}
+
+.yr-name {
+    font-size: 1rem;
+    font-weight: 700;
+    flex: 1;
+}
+
+.yr-score {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    font-weight: 900;
+    color: var(--gold);
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .lb-header        { padding: 30px 20px 16px; flex-direction: column; align-items: flex-start; gap: 12px; }
+    .lb-title         { font-size: 2rem; }
+    .lb-table-section { margin: 20px 16px; }
+    .lb-table-header,
+    .lb-row           { grid-template-columns: 50px 1fr 100px; }
+    .lb-table-header span:nth-child(3),
+    .lb-row .lb-correct { display: none; }
+    .podium-section   { padding: 20px 16px 0; gap: 0; }
+    .podium-block     { width: 100px; }
+    .your-rank-bar    { padding: 12px 20px; }
+}
