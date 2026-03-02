@@ -100,56 +100,6 @@
     border-bottom:3px solid #ff2a2a;
     color:#ff2a2a;
   }
-
-  
-  /* LOGIN BOX */
-  .login-box{
-    margin:40px 60px;
-    padding:40px;
-    background:linear-gradient(135deg,#1a0000,#000);
-    border:1px solid #ff2a2a;
-    border-radius:20px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-  }
-  
-  .login-box h2{
-    font-size:22px;
-    margin-bottom:10px;
-  }
-  
-  .login-box button{
-    background:#ff2a2a;
-    border:none;
-    padding:12px 25px;
-    border-radius:30px;
-    cursor:pointer;
-    font-weight:600;
-    transition:0.3s;
-  }
-  
-  .login-box button:hover{
-    background:white;
-    color:#ff2a2a;
-  }
-
-  .login-warning {
-    color: #ff4444;
-    margin-top: 10px;
-    font-size: 14px;
-    font-weight: bold;
-    text-align: center;
-
-  .login-container {
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: #0b0b0b;
-  }
-  }
-
   
   /* MATCH SECTION */
   .match-section{
