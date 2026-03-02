@@ -276,9 +276,10 @@ def admin_update_match():
     current_match = col.find_one({"match_id": match_id})
     already_completed = current_match.get("status") == "completed"
 
+    # ใช้ทีมจาก DB ถ้า admin ไม่ได้ส่งมา (ไม่ overwrite ทีมที่ propagate มาแล้ว)
     update_fields = {
-        "team1": team1,
-        "team2": team2,
+        "team1": team1 if team1 else current_match.get("team1"),
+        "team2": team2 if team2 else current_match.get("team2"),
         "status": data.get("status", "upcoming")
     }
 

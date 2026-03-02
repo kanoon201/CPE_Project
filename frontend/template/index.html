@@ -188,7 +188,7 @@
           {% else %}
             <div class="match-logo-placeholder">{{ team_val[:3] }}</div>
           {% endif %}
-          <span class="{{ 'team1' if side == 'left' else 'team2' }}">
+          <span class="{{ 'team1' if side == 'left' else 'team2' }}" data-shortname="{{ team_val }}">
             {{ team_logos[team_val].Teamname if team_val in team_logos else team_val }}
           </span>
         {% else %}
@@ -342,40 +342,44 @@
 
 <script>
 function submitPrediction(button, matchId) {
-  // หา match-card ที่กด
   const card = button.closest(".match-card");
-  // อ่าน score เฉพาะในการ์ดนี้
   const inputs = card.querySelectorAll(".score-input");
   const s1 = parseInt(inputs[0].value, 10);
   const s2 = parseInt(inputs[1].value, 10);
+  const resultEl = card.querySelector(".result");
 
-  // เช็คกรอกครบ
   if (isNaN(s1) || isNaN(s2)) {
-    card.querySelector(".result").innerText =
-      "Please enter both scores.";
+    resultEl.innerText = "Please enter both scores.";
     return;
   }
-
-  // เช็คติดลบ
   if (s1 < 0 || s2 < 0) {
-    card.querySelector(".result").innerText="Scores cannot be negative.";
+    resultEl.innerText = "Scores cannot be negative.";
     return;
   }
-  // ✅ เช็ค BO3
-  const maxScore = Math.max(s1, s2);
-  const minScore = Math.min(s1, s2);
-  if (!(maxScore === 2 && minScore <= 1)) {
-    card.querySelector(".result").innerText =
-    "Please enter a valid BO3 score (2-0, 2-1, 1-2, 0-2)";
+  if (s1 === s2) {
+    resultEl.innerText = "Scores cannot be equal.";
     return;
   }
 
-  // อ่านชื่อทีม
-  const team1 = card.querySelector(".team1").innerText;
-  const team2 = card.querySelector(".team2").innerText;
+  // อ่าน BO จาก badge แล้ว validate
+  const boBadge = card.querySelector(".match-bo-badge");
+  const boText = boBadge ? boBadge.innerText.trim() : "BO3";
+  const maxWins = boText === "BO5" ? 3 : boText === "BO1" ? 1 : 2;
+  if (Math.max(s1, s2) !== maxWins) {
+    resultEl.innerText = `Invalid ${boText} score. Winner needs ${maxWins} wins.`;
+    return;
+  }
 
-  const winner =
-    parseInt(s1) > parseInt(s2) ? team1 : team2;
+  // อ่าน shortname จาก data-shortname แทน innerText
+  const team1 = card.querySelector(".team1[data-shortname]")?.dataset.shortname ?? "";
+  const team2 = card.querySelector(".team2[data-shortname]")?.dataset.shortname ?? "";
+
+  if (!team1 || !team2) {
+    resultEl.innerText = "Error: could not read team names.";
+    return;
+  }
+
+  const winner = s1 > s2 ? team1 : team2;
 
   fetch("/submit_prediction", {
     method: "POST",
@@ -388,17 +392,12 @@ function submitPrediction(button, matchId) {
   })
   .then(res => res.json())
   .then(data => {
-      if (data.status === "success") {
-        card.querySelector(".result").innerText =
-          "Prediction saved / updated!";
-        
-        // อัปเดต Previous ทันที
-        const prevText = card.querySelector(".prev-prediction");
-        if (prevText) {
-          prevText.innerText = `Previous: ${winner} ${s1}-${s2}`;
-        }
-      }
-    });
+    if (data.status === "success") {
+      resultEl.innerText = "Prediction saved / updated!";
+      const prevText = card.querySelector(".prev-prediction");
+      if (prevText) prevText.innerText = `Previous: ${winner} ${s1}-${s2}`;
+    }
+  });
 }
 
 function submitPrediction2(button, matchId) {
