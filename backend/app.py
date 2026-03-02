@@ -95,9 +95,14 @@ app.secret_key = 'your_super_secret_key_here'
 
 @app.route("/")
 def index():
-    if "username" in session:
+    if "user_id" in session:
         return redirect(url_for("predict_page"))
-    return render_template("index.html")
+
+    return render_template(
+        "index.html",
+        logged_in=False,
+        is_admin=False
+    )
 
 @app.route("/predict")
 def predict_page():
@@ -136,7 +141,7 @@ def predict_page():
     matches_map = {m["match_id"]: m for m in matches}
 
     return render_template(
-        "index.html",
+        "predict.html",
         matches=matches,
         matches_map=matches_map,
         user_predictions=user_predictions,
@@ -538,6 +543,56 @@ def leaderboard_page():
         user_rank=user_rank,
         user_score=user_score
     )
+
+@app.route("/api/matches")
+def api_matches():
+    if "user_id" not in session:
+        return {"error": "unauthorized"}, 401
+
+    match_col = get_mongo_collection("pickem_matches")
+    matches   = list(match_col.find().sort("order", 1))
+
+    # Team logos map: shortname -> logo URL
+    conn   = get_mysql_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT Shortname, Teamname, Logo FROM Team")
+    team_logos = {row["Shortname"]: row["Logo"] for row in cursor.fetchall()}
+    cursor.close()
+    conn.close()
+
+    # User's predictions
+    conn2   = get_mysql_connection()
+    cursor2 = conn2.cursor(dictionary=True)
+    cursor2.execute(
+        "SELECT Match_id, Predict_Winner, Predict_Score FROM Pickem_DATA WHERE User_id = %s",
+        (session["user_id"],)
+    )
+    user_predictions = {
+        r["Match_id"]: {"Predict_Winner": r["Predict_Winner"], "Predict_Score": r["Predict_Score"]}
+        for r in cursor2.fetchall()
+    }
+    cursor2.close()
+    conn2.close()
+
+    serialized = []
+    for m in matches:
+        serialized.append({
+            "match_id": m.get("match_id"),
+            "bracket":  m.get("bracket"),
+            "round":    m.get("round"),
+            "team1":    m.get("team1") or "",
+            "team2":    m.get("team2") or "",
+            "status":   m.get("status") or "upcoming",
+            "winner":   m.get("winner") or "",
+            "score":    m.get("score")  or "",
+            "order":    m.get("order",  0),
+        })
+
+    return {
+        "matches":          serialized,
+        "logos":            team_logos,   
+        "user_predictions": user_predictions, 
+    }
 
 if __name__ == '__main__':
     seed_bracket()
