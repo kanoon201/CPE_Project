@@ -245,7 +245,7 @@ def admin_add_result():
 def admin_update_match():
     if session.get("username") != "ADMIN":
         return {"error": "unauthorized"}, 403
-        
+
     data = request.json
     col = get_mongo_collection("pickem_matches")
     match_id = data.get("match_id")
@@ -253,47 +253,92 @@ def admin_update_match():
     team2 = data.get("team2")
     score = data.get("score")
     winner = data.get("winner")
+    
+    current_match = col.find_one({"match_id": match_id})
+    already_completed = current_match.get("status") == "completed"
 
     update_fields = {
         "team1": team1,
         "team2": team2,
         "status": data.get("status", "upcoming")
     }
-    
+
     if score and winner:
         update_fields["score"] = score
         update_fields["winner"] = winner
         update_fields["status"] = "completed"
 
     col.update_one({"match_id": match_id}, {"$set": update_fields})
-
-    if score and winner:
-        current_match = col.find_one({"match_id": match_id})
+    if score and winner and not already_completed:
         loser = None
-        if current_match["team1"] == winner:
-            loser = current_match["team2"]
-        elif current_match["team2"] == winner:
-            loser = current_match["team1"]
+        if team1 == winner:
+            loser = team2
+        elif team2 == winner:
+            loser = team1
 
-        # ส่งผู้ชนะ
-        next_win_id = current_match.get("next_win")
+        if winner and loser:
+            conn = get_mysql_connection()
+            cursor = conn.cursor()
+            try:
+                # Winner gets +1 Win, +3 Points
+                cursor.execute("""
+                    UPDATE Team
+                    SET Wins = Wins + 1, Points = Points + 3
+                    WHERE Shortname = %s
+                """, (winner,))
+
+                # Loser gets +1 Loss
+                cursor.execute("""
+                    UPDATE Team
+                    SET Losses = Losses + 1
+                    WHERE Shortname = %s
+                """, (loser,))
+
+                conn.commit()
+                print(f"✅ Team stats updated: {winner} won, {loser} lost")
+            except Exception as e:
+                print("DB ERROR updating team stats:", e)
+            finally:
+                cursor.close()
+                conn.close()
+    updated_match = col.find_one({"match_id": match_id})
+    if score and winner and updated_match:
+        loser = updated_match["team2"] if updated_match["team1"] == winner else updated_match["team1"]
+
+        next_win_id = updated_match.get("next_win")
         if next_win_id:
             next_match = col.find_one({"match_id": next_win_id})
             if next_match:
-                target_field = "team1" if not next_match.get("team1") else ("team2" if not next_match.get("team2") else None)
+                target_field = "team1" if not next_match.get("team1") else (
+                    "team2" if not next_match.get("team2") else None)
                 if target_field:
-                    col.update_one({"match_id": next_win_id}, {"$set": {target_field: winner, "status": "upcoming"}})
+                    col.update_one({"match_id": next_win_id},
+                                   {"$set": {target_field: winner, "status": "upcoming"}})
 
-        # ส่งผู้แพ้
-        next_lose_id = current_match.get("next_lose")
+        next_lose_id = updated_match.get("next_lose")
         if next_lose_id and loser:
             next_match = col.find_one({"match_id": next_lose_id})
             if next_match:
-                target_field = "team1" if not next_match.get("team1") else ("team2" if not next_match.get("team2") else None)
+                target_field = "team1" if not next_match.get("team1") else (
+                    "team2" if not next_match.get("team2") else None)
                 if target_field:
-                    col.update_one({"match_id": next_lose_id}, {"$set": {target_field: loser, "status": "upcoming"}})
+                    col.update_one({"match_id": next_lose_id},
+                                   {"$set": {target_field: loser, "status": "upcoming"}})
 
     return {"status": "success"}
+
+@app.route("/teams/data")
+def teams_data():
+    conn = get_mysql_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT Teamname, Shortname, Region, Logo, Wins, Losses, Points
+        FROM Team ORDER BY Points DESC
+    """)
+    teams = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return {"teams": teams}
 
 @app.route("/leaderboard")
 def leaderboard_page():

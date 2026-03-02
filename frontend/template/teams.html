@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Teams</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teams – PICK'EM</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='teams.css') }}">
 </head>
 
 <body>
@@ -15,69 +17,121 @@
     <a href="/matches">Matches</a>
     <a href="/tournament">Tournament</a>
     <a href="/leaderboard">Leaderboard</a>
-    <a href="/teams">Teams</a>
-    
+    <a href="/teams" class="active">Teams</a>
     {% if logged_in %}
-        {% if is_admin %}
-            <span class="user-name" style="color:#00ff99; font-weight:bold;">⚙ {{ session['username'] }}</span>
-        {% else %}
-            <span class="user-name">{{ session['username'] }}</span>
-        {% endif %}
-        <a href="/logout" class="logout-link">Log out</a>
+      {% if is_admin %}
+        <span class="user-name" style="color:#00ff99;font-weight:bold;">⚙ {{ session['username'] }}</span>
+      {% else %}
+        <span class="user-name">{{ session['username'] }}</span>
+      {% endif %}
+      <a href="/logout" class="logout-link">Log out</a>
     {% else %}
-        <span>Profile</span>
+      <span>Profile</span>
     {% endif %}
   </div>
 </div>
 
-<div class="header">
-  <h1>Teams</h1>
-  <div class="tabs">
-    <span class="active">Teams information</span>
+<!-- PAGE HEADER -->
+<div class="teams-header">
+  <div class="teams-title-wrap">
+    <h1 class="teams-title">TEAMS</h1>
+    <p class="teams-subtitle">VCT 2026 PARTICIPATING TEAMS</p>
+  </div>
+  <div class="teams-badge">STANDINGS</div>
+</div>
+
+<!-- LIVE INDICATOR -->
+<div class="live-bar">
+  <span class="live-dot"></span>
+  <span class="live-text">LIVE STANDINGS</span>
+  <span id="last-updated" class="live-updated"></span>
+</div>
+
+<!-- TEAMS TABLE -->
+<div class="teams-section">
+  <div class="teams-table-wrap">
+
+    <div class="teams-table-header">
+      <span class="th-place">PLACE</span>
+      <span class="th-logo">LOGO</span>
+      <span class="th-team">TEAM</span>
+      <span class="th-short">TAG</span>
+      <span class="th-region">REGION</span>
+      <span class="th-wins">W</span>
+      <span class="th-losses">L</span>
+      <span class="th-points">PTS</span>
+    </div>
+
+    <div id="teams-tbody">
+      {% for team in teams %}
+      <div class="team-row {% if loop.index == 1 %}rank-first{% endif %}"
+           data-shortname="{{ team.Shortname }}"
+           style="animation-delay: {{ loop.index * 0.06 }}s">
+
+        <span class="td-place">
+          {% if loop.index == 1 %}
+            <span class="place-badge gold">1</span>
+          {% elif loop.index == 2 %}
+            <span class="place-badge silver">2</span>
+          {% elif loop.index == 3 %}
+            <span class="place-badge bronze">3</span>
+          {% else %}
+            <span class="place-num">{{ loop.index }}</span>
+          {% endif %}
+        </span>
+
+        <span class="td-logo">
+          {% if team.Logo %}
+            <div class="team-logo-wrap">
+              <img src="{{ team.Logo }}" alt="{{ team.Teamname }}" class="team-logo-img">
+            </div>
+          {% else %}
+            <div class="team-logo-placeholder">{{ team.Shortname }}</div>
+          {% endif %}
+        </span>
+
+        <span class="td-team">{{ team.Teamname }}</span>
+        <span class="td-short">{{ team.Shortname }}</span>
+        <span class="td-region">{{ team.Region }}</span>
+        <span class="td-wins col-wins">{{ team.Wins }}</span>
+        <span class="td-losses col-losses">{{ team.Losses }}</span>
+        <span class="td-points col-points">{{ team.Points }}</span>
+
+      </div>
+      {% endfor %}
+    </div>
+
   </div>
 </div>
 
-<div class="team-container">
-  <table class="team-table">
-    <thead>
-    <tr>
-        <th>Place</th>
-        <th class="col-logo">Logo</th>
-        <th class="col-team">Team</th>
-        <th>Short</th>
-        <th class="col-region">Region</th>
-        <th>Wins</th>
-        <th>Losses</th>
-        <th>Points</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    {% for team in teams %}
-    <tr>
-        <td>{{ loop.index }}</td>
-
-        <td class="col-logo">
-        {% if team.Logo %}
-            <div class="logo-box">
-            <img src="{{ team.Logo }}" alt="{{ team.Teamname }}" class="team-logo">
-            </div>
-        {% else %}
-            <span>-</span>
-        {% endif %}
-        </td>
-
-        <td class="col-team">{{ team.Teamname }}</td>
-        <td>{{ team.Shortname }}</td>
-        <td class="col-region">{{ team.Region }}</td>
-        <td>{{ team.Wins }}</td>
-        <td>{{ team.Losses }}</td>
-        <td><strong>{{ team.Points }}</strong></td>
-    </tr>
-    {% endfor %}
-    </tbody>
-  </table>
-</div>
+<script>
+  function updateTeams() {
+    fetch('/teams/data')
+      .then(res => res.json())
+      .then(data => {
+        data.teams.forEach(team => {
+          const row = document.querySelector(`[data-shortname="${team.Shortname}"]`);
+          if (!row) return;
+          const winsEl   = row.querySelector('.col-wins');
+          const lossesEl = row.querySelector('.col-losses');
+          const pointsEl = row.querySelector('.col-points');
+          if (parseInt(pointsEl.textContent) !== team.Points) {
+            row.classList.remove('flash');
+            void row.offsetWidth;
+            row.classList.add('flash');
+          }
+          winsEl.textContent   = team.Wins;
+          lossesEl.textContent = team.Losses;
+          pointsEl.textContent = team.Points;
+        });
+        const now = new Date();
+        document.getElementById('last-updated').textContent =
+          'Updated ' + now.toLocaleTimeString();
+      })
+      .catch(err => console.log('Update failed:', err));
+  }
+  setInterval(updateTeams, 15000);
+</script>
 
 </body>
 </html>
