@@ -306,6 +306,20 @@
 <div id="toast" class="predict-toast"></div>
 
 <script>
+/* ── Global team logos map (shortname -> logo URL) from server ── */
+const TEAM_LOGOS = {
+  {% for shortname, info in team_logos.items() %}
+  "{{ shortname }}": "{{ info.Logo or '' }}",
+  {% endfor %}
+};
+
+function logoHTML(shortname) {
+  const url = TEAM_LOGOS[shortname] || '';
+  return url
+    ? `<img src="${url}" alt="${shortname}">`
+    : `<span>${shortname}</span>`;
+}
+
 function selectTeam(mid, team, el) {
   const card = el.closest('.match-card');
   if (card.dataset.status === 'completed') return;
@@ -382,12 +396,12 @@ async function adminAssignTeams(mid) {
       const teamsDiv = card.querySelector('.card-teams');
       teamsDiv.innerHTML = `
         <div class="team-pick" onclick="selectTeam('${mid}','${t1}',this)">
-          <div class="team-logo-box"><span>${t1}</span></div>
+          <div class="team-logo-box">${logoHTML(t1)}</div>
           <span class="team-tag">${t1}</span>
         </div>
         <div class="card-vs"><span>VS</span></div>
         <div class="team-pick" onclick="selectTeam('${mid}','${t2}',this)">
-          <div class="team-logo-box"><span>${t2}</span></div>
+          <div class="team-logo-box">${logoHTML(t2)}</div>
           <span class="team-tag">${t2}</span>
         </div>
       `;
@@ -637,21 +651,21 @@ async function pollMatches() {
 
 function updateTeams(card, mid, t1, t2, logos) {
   const teamsDiv = card.querySelector('.card-teams');
-  const l1 = logos[t1] || '';
-  const l2 = logos[t2] || '';
+
+  // Use TEAM_LOGOS global (from server render) first, then fall back to polling logos param
+  function getLogoHTML(shortname) {
+    const url = TEAM_LOGOS[shortname] || logos[shortname] || '';
+    return url ? `<img src="${url}" alt="${shortname}">` : `<span>${shortname}</span>`;
+  }
 
   teamsDiv.innerHTML = `
     <div class="team-pick" onclick="selectTeam('${mid}','${t1}',this)">
-      <div class="team-logo-box">
-        ${l1 ? `<img src="${l1}" alt="${t1}">` : `<span>${t1}</span>`}
-      </div>
+      <div class="team-logo-box">${getLogoHTML(t1)}</div>
       <span class="team-tag">${t1}</span>
     </div>
     <div class="card-vs"><span>VS</span></div>
     <div class="team-pick" onclick="selectTeam('${mid}','${t2}',this)">
-      <div class="team-logo-box">
-        ${l2 ? `<img src="${l2}" alt="${t2}">` : `<span>${t2}</span>`}
-      </div>
+      <div class="team-logo-box">${getLogoHTML(t2)}</div>
       <span class="team-tag">${t2}</span>
     </div>
   `;
