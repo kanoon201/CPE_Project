@@ -171,19 +171,19 @@
 {% set p = user_predictions.get(m.match_id) if user_predictions is defined else none %}
 {% set pred_scores = p.Predict_Score.split('-') if p and p.Predict_Score else [] %}
 
-{# --- ROUND MULTIPLIER --- #}
+{# --- ROUND MULTIPLIER (ตรงกับ app.py ROUND_MULTIPLIER) --- #}
+{# full pts = multiplier, half pts = multiplier/2 #}
 {%- set round_mul = {
-  "Upper Quarterfinals": 1,
-  "Lower Round 1":       1,
-  "Upper Semifinals":    2,
-  "Lower Round 2":       2,
-  "Lower Round 3":       4,
-  "Upper Final":         4,
-  "Lower Final":         8,
-  "Grand Final":         16
+  "Upper Quarterfinals": 10,
+  "Lower Round 1":       10,
+  "Upper Semifinals":    15,
+  "Lower Round 2":       15,
+  "Lower Round 3":       25,
+  "Upper Final":         30,
+  "Lower Final":         30,
+  "Grand Final":         40
 } -%}
-{%- set mul = round_mul.get(m.round, 1) -%}
-{%- set max_pts = 10 * mul -%}
+{%- set max_pts = round_mul.get(m.round, 10) -%}
 
 {# --- คำนวณ highlight class สำหรับแต่ละ row --- #}
 {% if m.status == "completed" and p %}
@@ -199,12 +199,12 @@
   -%}
   {%- set score_correct = (p.Predict_Score == m.score) -%}
 
-  {# คะแนนที่ได้จริง #}
+  {# คะแนนที่ได้จริง (full = max_pts, half = max_pts/2) #}
   {%- if winner_correct and score_correct -%}
-    {%- set earned_pts = 10 * mul -%}
+    {%- set earned_pts = max_pts -%}
     {%- set pts_class = "pts-full" -%}
   {%- elif winner_correct -%}
-    {%- set earned_pts = 5 * mul -%}
+    {%- set earned_pts = (max_pts / 2) | int -%}
     {%- set pts_class = "pts-half" -%}
   {%- else -%}
     {%- set earned_pts = 0 -%}
@@ -245,6 +245,11 @@
 
   <div class="bracket-item" {% if m.status == "completed" %}data-completed="1"{% endif %}>
 
+    {# scores[0] = winner's score, scores[1] = loser's score #}
+    {%- set t1_is_win = (m.winner == m.team1 or (m.team1 in team_logos and m.winner == team_logos[m.team1].Teamname)) -%}
+    {%- set score_t1 = scores[0] if t1_is_win else scores[1] -%}
+    {%- set score_t2 = scores[1] if t1_is_win else scores[0] -%}
+
     <div class="bracket-item-team {{ row1_class }}">
       {% if m.team1 and m.team1 in team_logos %}
           <img src="{{ team_logos[m.team1].Logo }}" class="bracket-logo">
@@ -253,7 +258,7 @@
           <span class="team-name">{{ m.team1 or "TBD" }}</span>
       {% endif %}
       {% if m.status == "completed" %}
-        <span class="score">{{ scores[0] if scores else "" }}</span>
+        <span class="score">{{ score_t1 if scores else "" }}</span>
       {% elif m.status == "upcoming" and pred_scores %}
         <span class="score">{{ pred_scores[0] }}</span>
       {% else %}
@@ -269,7 +274,7 @@
           <span class="team-name">{{ m.team2 or "TBD" }}</span>
       {% endif %}
       {% if m.status == "completed" %}
-        <span class="score">{{ scores[1] if scores|length > 1 else "" }}</span>
+        <span class="score">{{ score_t2 if scores|length > 1 else "" }}</span>
       {% elif m.status == "upcoming" and pred_scores|length > 1 %}
         <span class="score">{{ pred_scores[1] }}</span>
       {% else %}

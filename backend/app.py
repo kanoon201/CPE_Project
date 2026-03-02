@@ -372,14 +372,14 @@ def leaderboard_page():
 
     # round multiplier ตาม bracket round
     ROUND_MULTIPLIER = {
-        "Upper Quarterfinals": 1,
-        "Lower Round 1":       1,
-        "Upper Semifinals":    2,
-        "Lower Round 2":       2,
-        "Lower Round 3":       4,
-        "Upper Final":         4,
-        "Lower Final":         8,
-        "Grand Final":         16,
+        "Upper Quarterfinals": 10,
+        "Lower Round 1":       10,
+        "Upper Semifinals":    15,
+        "Lower Round 2":       15,
+        "Lower Round 3":       25,
+        "Upper Final":         30,
+        "Lower Final":         30,
+        "Grand Final":         40,
     }
 
     # map match_id → {winner, score, round}
@@ -430,16 +430,13 @@ def leaderboard_page():
         actual_short    = name_to_short.get(info["winner"], info["winner"])
 
         if actual_short and predicted_short == actual_short:
-            # ทายทีมถูก — เช็คสกอร์ด้วย
             if row["Predict_Score"] and row["Predict_Score"] == info["score"]:
-                # ถูกหมด → 10 คะแนน × multiplier
-                pts = 10 * multiplier
+                pts = multiplier          # ถูกทั้งทีมและสกอร์ = full pts
             else:
-                # ถูกทีม สกอร์ผิด → 5 คะแนน × multiplier
-                pts = 5 * multiplier
+                pts = multiplier / 2     # ถูกทีม สกอร์ผิด = half pts
             scores[uname]["CorrectPicks"] += 1
             scores[uname]["Score"] += pts
-        # ทายผิด → 0 คะแนน (ไม่ต้องทำอะไร)
+        
 
     leaderboard = sorted(scores.values(), key=lambda x: x["Score"], reverse=True)
 
