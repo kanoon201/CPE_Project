@@ -9,88 +9,6 @@ app = Flask(
     template_folder = "../frontend/template",
     static_folder = "../frontend/static"
 )
-<<<<<<< HEAD
-
-# --- Frontend Route ---
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-# --- Register Route ---
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-
-        conn = get_mysql_connection()
-        cursor = conn.cursor(dictionary=True)
-
-        # check user exists
-        cursor.execute(
-            "SELECT * FROM User WHERE Username = %s",
-            (username,)
-        )
-
-        existing = cursor.fetchone()
-
-        if existing:
-            return "Username already exists"
-
-        # insert new user
-        cursor.execute(
-            "INSERT INTO User (Username, Password) VALUES (%s, %s)",
-            (username, password)
-        )
-
-        conn.commit()
-
-        cursor.close()
-        conn.close()
-
-        return redirect(url_for('login'))
-
-    return render_template('register.html')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-=======
 app.secret_key = 'your_super_secret_key_here'
 
 @app.route("/")
@@ -597,4 +515,3 @@ def api_matches():
 if __name__ == '__main__':
     seed_bracket()
     app.run(host='0.0.0.0', port=5001, debug=True)
->>>>>>> main

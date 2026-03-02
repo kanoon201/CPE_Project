@@ -13,11 +13,7 @@ def get_mysql_connection():
         connection = mysql.connector.connect(
             host=os.getenv("MYSQL_HOST", "localhost"),
             user=os.getenv("MYSQL_USER", "root"),
-<<<<<<< HEAD
-            password=os.getenv("MYSQL_PASSWORD", "rootpassword"),
-=======
             password=os.getenv("MYSQL_PASSWORD", "root"),
->>>>>>> main
             database=os.getenv("MYSQL_DATABASE", "pickem_db"),
             port=int(os.getenv("MYSQL_PORT", 3306))
         )
@@ -29,7 +25,6 @@ def get_mysql_connection():
 
 def get_mongo_collection(collection_name):
     try:
-<<<<<<< HEAD
         uri = os.getenv("MONGO_URI", "mongodb://localhost:27017")
         db_name = os.getenv("MONGO_DB", "pickem_db")
 
@@ -39,12 +34,6 @@ def get_mongo_collection(collection_name):
 
         return db["tournaments"]
 
-=======
-        uri = os.getenv("MONGO_URI", "mongodb://localhost:27017/pickem_db")
-        client = MongoClient(uri)
-        db = client.get_database()
-        return db[collection_name]
->>>>>>> main
     except Exception as e:
         print(f"MongoDB connection error: {e}")
         return None
