@@ -177,6 +177,20 @@ def matches_page():
     cursor.close()
     conn.close()
 
+    user_predictions = {}
+    if "user_id" in session:
+        conn2 = get_mysql_connection()
+        cursor2 = conn2.cursor(dictionary=True)
+        cursor2.execute("""
+            SELECT Match_id, Predict_Winner, Predict_Score
+            FROM Pickem_DATA
+            WHERE User_id = %s
+        """, (session["user_id"],))
+        for r in cursor2.fetchall():
+            user_predictions[r["Match_id"]] = r
+        cursor2.close()
+        conn2.close()
+
     return render_template(
         "matches.html",
         upper_rounds=upper_rounds,
@@ -184,7 +198,8 @@ def matches_page():
         grand_rounds=grand_rounds,
         team_logos=team_logos,
         logged_in=("username" in session),
-        is_admin=(session.get("username") == "ADMIN")
+        is_admin=(session.get("username") == "ADMIN"),
+        user_predictions=user_predictions
     )
 @app.route("/teams")
 def teams_page():
@@ -348,7 +363,28 @@ def teams_data():
 def leaderboard_page():
     result_col = get_mongo_collection("pickem_matches")
     results = list(result_col.find())
-    winners = {r["match_id"]: r.get("winner") for r in results if r.get("winner")}
+
+    # round multiplier ตาม bracket round
+    ROUND_MULTIPLIER = {
+        "Upper Quarterfinals": 1,
+        "Lower Round 1":       1,
+        "Upper Semifinals":    2,
+        "Lower Round 2":       2,
+        "Lower Round 3":       4,
+        "Upper Final":         4,
+        "Lower Final":         8,
+        "Grand Final":         16,
+    }
+
+    # map match_id → {winner, score, round}
+    match_info = {}
+    for r in results:
+        if r.get("winner"):
+            match_info[r["match_id"]] = {
+                "winner": r.get("winner"),
+                "score":  r.get("score"),
+                "round":  r.get("round", "")
+            }
 
     conn = get_mysql_connection()
     cursor = conn.cursor(dictionary=True)
@@ -361,7 +397,7 @@ def leaderboard_page():
         name_to_short[t["Shortname"]] = t["Shortname"]
 
     cursor.execute("""
-        SELECT u.Username, pd.Match_id, pd.Predict_Winner
+        SELECT u.Username, pd.Match_id, pd.Predict_Winner, pd.Predict_Score
         FROM User u
         LEFT JOIN Pickem_DATA pd ON u.User_id = pd.User_id
     """)
@@ -374,13 +410,30 @@ def leaderboard_page():
         uname = row["Username"]
         if uname not in scores:
             scores[uname] = {"Username": uname, "CorrectPicks": 0, "Score": 0}
-        if row["Match_id"] and row["Predict_Winner"]:
-            actual_winner = winners.get(row["Match_id"])
-            predicted_short = name_to_short.get(row["Predict_Winner"], row["Predict_Winner"])
-            actual_short    = name_to_short.get(actual_winner, actual_winner)
-            if actual_short and predicted_short == actual_short:
-                scores[uname]["CorrectPicks"] += 1
-                scores[uname]["Score"] += 10
+
+        if not row["Match_id"] or not row["Predict_Winner"]:
+            continue
+
+        info = match_info.get(row["Match_id"])
+        if not info:
+            continue
+
+        multiplier = ROUND_MULTIPLIER.get(info["round"], 1)
+
+        predicted_short = name_to_short.get(row["Predict_Winner"], row["Predict_Winner"])
+        actual_short    = name_to_short.get(info["winner"], info["winner"])
+
+        if actual_short and predicted_short == actual_short:
+            # ทายทีมถูก — เช็คสกอร์ด้วย
+            if row["Predict_Score"] and row["Predict_Score"] == info["score"]:
+                # ถูกหมด → 10 คะแนน × multiplier
+                pts = 10 * multiplier
+            else:
+                # ถูกทีม สกอร์ผิด → 5 คะแนน × multiplier
+                pts = 5 * multiplier
+            scores[uname]["CorrectPicks"] += 1
+            scores[uname]["Score"] += pts
+        # ทายผิด → 0 คะแนน (ไม่ต้องทำอะไร)
 
     leaderboard = sorted(scores.values(), key=lambda x: x["Score"], reverse=True)
 
