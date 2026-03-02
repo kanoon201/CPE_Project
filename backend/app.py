@@ -50,9 +50,13 @@ def predict_page():
         for r in rows:
             user_predictions[r["Match_id"]] = r
 
+    # สร้าง dict match_id -> match สำหรับ lookup team1_src/team2_src ใน template
+    matches_map = {m["match_id"]: m for m in matches}
+
     return render_template(
         "index.html",
         matches=matches,
+        matches_map=matches_map,
         user_predictions=user_predictions,
         team_logos=team_logos,
         logged_in=("user_id" in session),

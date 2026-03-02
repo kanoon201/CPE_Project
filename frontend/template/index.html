@@ -53,42 +53,72 @@
 
   {# add admin result form here #}
   {% if is_admin %}
-  <div style="border:2px solid #00ff99; border-radius:16px; padding:16px; min-width:400px;">
-    <h3 style="color:#00ff99; margin-bottom:10px;">ADMIN – Update Match</h3>
-    <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
-      <select id="admin_match_id" style="flex:1;">
+  <div style="border:2px solid #00ff99; border-radius:16px; padding:20px; min-width:480px; background:#0a1a0a;">
+    <h3 style="color:#00ff99; margin-bottom:14px;">⚙ ADMIN – Update Match Result</h3>
+
+    <div style="margin-bottom:12px;">
+      <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">SELECT MATCH</label>
+      <select id="admin_match_id" onchange="onMatchSelect(this)" style="width:100%; padding:8px; background:#111; color:white; border:1px solid #333; border-radius:8px;">
         <option value="">-- Select Match --</option>
         {% for m in matches %}
-          <option value="{{ m.match_id }}">{{ m.match_id }} – {{ m.round }}</option>
+          <option value="{{ m.match_id }}"
+            data-team1="{{ m.team1 or '' }}"
+            data-team2="{{ m.team2 or '' }}"
+            data-status="{{ m.status }}"
+            data-needs-teams="{{ 'true' if m.round == 'Upper Quarterfinals' else 'false' }}">
+            {{ m.match_id }} – {{ m.round }}
+            {% if m.team1 and m.team2 %} ({{ m.team1 }} vs {{ m.team2 }}){% elif m.status == 'pending' %} ⏳ Waiting{% endif %}
+          </option>
         {% endfor %}
       </select>
-      <select id="admin_team1" style="flex:1;">
-        <option value="">-- Team 1 --</option>
-        {% for short, t in team_logos.items() %}
-          <option value="{{ short }}">{{ t.Teamname }}</option>
-        {% endfor %}
-      </select>
-      <select id="admin_team2" style="flex:1;">
-        <option value="">-- Team 2 --</option>
-        {% for short, t in team_logos.items() %}
-          <option value="{{ short }}">{{ t.Teamname }}</option>
-        {% endfor %}
-      </select>
-      <select id="admin_status" style="flex:1;">
-        <option value="pending">pending</option>
-        <option value="upcoming">upcoming</option>
-        <option value="completed">completed</option>
-      </select>
-      <input id="admin_score" placeholder="score (2-1)" style="flex:1;">
-      <select id="admin_winner" style="flex:1;">
-        <option value="">-- Winner --</option>
-        {% for short, t in team_logos.items() %}
-          <option value="{{ short }}">{{ t.Teamname }}</option>
-        {% endfor %}
-      </select>
-      <button class="submit-btn" style="margin:0;" onclick="adminUpdateMatch()">Update Match</button>
     </div>
-    <div id="admin_result" style="margin-top:8px; color:#00ff99;"></div>
+
+    <div id="teams-section" style="display:none; margin-bottom:12px;">
+      <div id="team-display" style="display:flex; gap:10px; align-items:center; justify-content:center; padding:10px; background:#1a0000; border-radius:8px; margin-bottom:8px;">
+        <span id="display_team1" style="font-weight:bold; color:white; font-size:16px;">-</span>
+        <span style="color:#555;">VS</span>
+        <span id="display_team2" style="font-weight:bold; color:white; font-size:16px;">-</span>
+      </div>
+      <div id="team-selectors" style="display:none; margin-bottom:8px;">
+        <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">SET TEAMS (Upper QF only)</label>
+        <div style="display:flex; gap:8px;">
+          <select id="admin_team1" style="flex:1; padding:8px; background:#111; color:white; border:1px solid #333; border-radius:8px;">
+            <option value="">-- Team 1 --</option>
+            {% for short, t in team_logos.items() %}
+              <option value="{{ short }}">{{ t.Teamname }}</option>
+            {% endfor %}
+          </select>
+          <select id="admin_team2" style="flex:1; padding:8px; background:#111; color:white; border:1px solid #333; border-radius:8px;">
+            <option value="">-- Team 2 --</option>
+            {% for short, t in team_logos.items() %}
+              <option value="{{ short }}">{{ t.Teamname }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div id="result-section" style="display:none;">
+      <div style="display:flex; gap:8px; margin-bottom:8px;">
+        <div style="flex:1;">
+          <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">SCORE</label>
+          <input id="admin_score" placeholder="e.g. 2-1" style="width:100%; padding:8px; background:#111; color:white; border:1px solid #333; border-radius:8px;">
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">WINNER</label>
+          <select id="admin_winner" style="width:100%; padding:8px; background:#111; color:white; border:1px solid #333; border-radius:8px;">
+            <option value="">-- Select Winner --</option>
+          </select>
+        </div>
+      </div>
+      <button class="submit-btn" style="margin:0; width:100%; padding:10px;" onclick="adminUpdateMatch()">✅ Submit Result</button>
+    </div>
+
+    <div id="pending-msg" style="display:none; color:#888; text-align:center; padding:10px;">
+      ⏳ Waiting for teams from previous match results
+    </div>
+
+    <div id="admin_result" style="margin-top:10px; color:#00ff99; text-align:center; font-weight:bold;"></div>
   </div>
   {% endif %}
 
@@ -150,55 +180,81 @@
         {% endif %}
       </h4>
 
-      {% if m.team1 and m.team2 %}
-        <div class="match-teams">
-          <div class="team-side">
-            {% if m.team1 in team_logos %}
-              <img src="{{ team_logos[m.team1].Logo }}" class="match-team-logo" alt="{{ m.team1 }}">
+      {# Macro: render 1 team slot - ถ้ามีทีมแสดงโลโก้+ชื่อ, ถ้าไม่มีแสดง placeholder #}
+      {% macro render_team(team_val, src, side) %}
+        {% if team_val %}
+          {% if team_val in team_logos %}
+            <img src="{{ team_logos[team_val].Logo }}" class="match-team-logo" alt="{{ team_val }}">
+          {% else %}
+            <div class="match-logo-placeholder">{{ team_val[:3] }}</div>
+          {% endif %}
+          <span class="{{ 'team1' if side == 'left' else 'team2' }}">
+            {{ team_logos[team_val].Teamname if team_val in team_logos else team_val }}
+          </span>
+        {% else %}
+          {# placeholder เทา พร้อมแสดงที่มา #}
+          <div class="match-logo-placeholder" style="background:#222; border:2px dashed #444;"></div>
+          {% if src %}
+            {% set sm = matches_map.get(src.from) %}
+            {% if sm and sm.team1 and sm.team2 %}
+              <span class="{{ 'team1' if side == 'left' else 'team2' }}" style="color:#888; font-size:12px; line-height:1.4;">
+                {{ "W" if src.type == "win" else "L" }} of<br>
+                <span style="color:#ff8800;">
+                  {{ team_logos[sm.team1].Teamname if sm.team1 in team_logos else sm.team1 }}
+                  vs
+                  {{ team_logos[sm.team2].Teamname if sm.team2 in team_logos else sm.team2 }}
+                </span>
+              </span>
             {% else %}
-              <div class="match-logo-placeholder">{{ m.team1[:3] }}</div>
+              <span class="{{ 'team1' if side == 'left' else 'team2' }}" style="color:#555; font-size:12px;">
+                {{ "Winner" if src.type == "win" else "Loser" }} of {{ src.from }}
+              </span>
             {% endif %}
-            <span class="team1">{{ team_logos[m.team1].Teamname if m.team1 in team_logos else m.team1 }}</span>
-          </div>
-          <span class="vs-text">VS</span>
-          <div class="team-side team-side-right">
-            <span class="team2">{{ team_logos[m.team2].Teamname if m.team2 in team_logos else m.team2 }}</span>
-            {% if m.team2 in team_logos %}
-              <img src="{{ team_logos[m.team2].Logo }}" class="match-team-logo" alt="{{ m.team2 }}">
-            {% else %}
-              <div class="match-logo-placeholder">{{ m.team2[:3] }}</div>
-            {% endif %}
-          </div>
+          {% else %}
+            <span class="{{ 'team1' if side == 'left' else 'team2' }}" style="color:#555;">TBD</span>
+          {% endif %}
+        {% endif %}
+      {% endmacro %}
+
+      <div class="match-teams">
+        <div class="team-side">
+          {{ render_team(m.team1, m.get("team1_src"), "left") }}
         </div>
-      {% else %}
-        <p style="color:gray;">Waiting for teams</p>
-      {% endif %}
+        <span class="vs-text">VS</span>
+        <div class="team-side team-side-right">
+          {{ render_team(m.team2, m.get("team2_src"), "right") }}
+        </div>
+      </div>
 
       {% if m.status == "pending" %}
         <p style="color:gray;">⏳ Match not open yet</p>
 
       {% elif m.status == "upcoming" %}
-        {% set p = user_predictions.get(m.match_id) %}
-        <div class="score-box">
+        {% if m.team1 and m.team2 %}
+          {% set p = user_predictions.get(m.match_id) %}
+          <div class="score-box">
+            {% if p %}
+              {% set prev = p.Predict_Score.split('-') %}
+              <input type="number" class="score-input" min="0" value="{{ prev[0] }}">
+              <input type="number" class="score-input" min="0" value="{{ prev[1] }}">
+            {% else %}
+              <input type="number" class="score-input" min="0">
+              <input type="number" class="score-input" min="0">
+            {% endif %}
+          </div>
           {% if p %}
-            {% set prev = p.Predict_Score.split('-') %}
-            <input type="number" class="score-input" min="0" value="{{ prev[0] }}">
-            <input type="number" class="score-input" min="0" value="{{ prev[1] }}">
-          {% else %}
-            <input type="number" class="score-input" min="0">
-            <input type="number" class="score-input" min="0">
+            <p class="prev-prediction" style="text-align:center; color:gray; font-size:0.8em; margin-top:8px;">
+              Previous: {{ p.Predict_Winner }} {{ p.Predict_Score }}
+            </p>
           {% endif %}
-        </div>
-        {% if p %}
-          <p class="prev-prediction" style="text-align:center; color:gray; font-size:0.8em; margin-top:8px;">
-            Previous: {{ p.Predict_Winner }} {{ p.Predict_Score }}
-          </p>
+          <button class="submit-btn"
+            onclick="submitPrediction(this,'{{ m.match_id }}')">
+            Submit Prediction
+          </button>
+          <div class="result"></div>
+        {% else %}
+          <p style="color:#ff8800; margin-top:10px;">⏳ Waiting for teams to be confirmed</p>
         {% endif %}
-        <button class="submit-btn"
-          onclick="submitPrediction(this,'{{ m.match_id }}')">
-          Submit Prediction
-        </button>
-        <div class="result"></div>
 
       {% elif m.status == "completed" %}
         <p style="color:#00ff99;">✅ Match Completed</p>
@@ -398,23 +454,111 @@ function submitPrediction2(button, matchId) {
   });
 }
 
+// เมื่อ admin เลือก match จาก dropdown
+function onMatchSelect(sel) {
+  const opt = sel.options[sel.selectedIndex];
+  const team1 = opt.dataset.team1;
+  const team2 = opt.dataset.team2;
+  const status = opt.dataset.status;
+  const needsTeams = opt.dataset.needsTeams === 'true';
+
+  const teamsSection = document.getElementById('teams-section');
+  const teamSelectors = document.getElementById('team-selectors');
+  const resultSection = document.getElementById('result-section');
+  const pendingMsg = document.getElementById('pending-msg');
+  const displayTeam1 = document.getElementById('display_team1');
+  const displayTeam2 = document.getElementById('display_team2');
+  const winnerSelect = document.getElementById('admin_winner');
+
+  // reset
+  teamsSection.style.display = 'none';
+  teamSelectors.style.display = 'none';
+  resultSection.style.display = 'none';
+  pendingMsg.style.display = 'none';
+
+  if (!sel.value) return;
+
+  teamsSection.style.display = 'block';
+
+  if (needsTeams) {
+    // Upper QF: แสดง dropdown เลือกทีม
+    teamSelectors.style.display = 'block';
+    displayTeam1.innerText = 'TBD';
+    displayTeam2.innerText = 'TBD';
+    resultSection.style.display = 'block';
+
+    // อัปเดต winner options ตาม team selector
+    document.getElementById('admin_team1').onchange = updateWinnerOptions;
+    document.getElementById('admin_team2').onchange = updateWinnerOptions;
+
+  } else if (team1 && team2) {
+    // แมตช์มีทีมแล้ว (จาก propagation) - แสดง read-only
+    displayTeam1.innerText = team1;
+    displayTeam2.innerText = team2;
+
+    // อัปเดต winner dropdown ให้เลือกได้เฉพาะ 2 ทีมนี้
+    winnerSelect.innerHTML = '<option value="">-- Select Winner --</option>';
+    [team1, team2].forEach(t => {
+      winnerSelect.innerHTML += `<option value="${t}">${t}</option>`;
+    });
+
+    resultSection.style.display = 'block';
+  } else {
+    // pending - รอทีมจาก propagation
+    pendingMsg.style.display = 'block';
+    displayTeam1.innerText = 'TBD';
+    displayTeam2.innerText = 'TBD';
+  }
+}
+
+function updateWinnerOptions() {
+  const t1 = document.getElementById('admin_team1').value;
+  const t2 = document.getElementById('admin_team2').value;
+  const winnerSelect = document.getElementById('admin_winner');
+  winnerSelect.innerHTML = '<option value="">-- Select Winner --</option>';
+  if (t1) winnerSelect.innerHTML += `<option value="${t1}">${t1}</option>`;
+  if (t2) winnerSelect.innerHTML += `<option value="${t2}">${t2}</option>`;
+}
+
 function adminUpdateMatch() {
+  const matchId = document.getElementById('admin_match_id').value;
+  const score = document.getElementById('admin_score').value || null;
+  const winner = document.getElementById('admin_winner').value || null;
+  const adminResult = document.getElementById('admin_result');
+
+  if (!matchId) {
+    adminResult.innerText = '❌ Please select a match';
+    adminResult.style.color = '#ff4444';
+    return;
+  }
+
+  // ดึง team1/team2 จาก option dataset (กรณี QF ที่ต้อง insert)
+  const opt = document.getElementById('admin_match_id').options[document.getElementById('admin_match_id').selectedIndex];
+  const needsTeams = opt.dataset.needsTeams === 'true';
+
+  const body = { match_id: matchId, score, winner };
+
+  if (needsTeams) {
+    body.team1 = document.getElementById('admin_team1').value || null;
+    body.team2 = document.getElementById('admin_team2').value || null;
+  }
+
   fetch("/admin/update_match", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      match_id: admin_match_id.value,
-      team1: admin_team1.value || null,
-      team2: admin_team2.value || null,
-      status: admin_status.value,
-      score: admin_score.value || null,
-      winner: admin_winner.value || null
-    })
+    body: JSON.stringify(body)
   })
   .then(res => res.json())
   .then(data => {
-    admin_result.innerText = data.message;
-    location.reload();
+    adminResult.style.color = data.status === 'success' ? '#00ff99' : '#ff4444';
+    adminResult.innerText = data.message || data.error || JSON.stringify(data);
+    if (data.status === 'success') {
+      setTimeout(() => location.reload(), 1200);
+    }
+  })
+  .catch(err => {
+    adminResult.style.color = '#ff4444';
+    adminResult.innerText = '❌ Network error';
   });
 }
 
@@ -425,4 +569,3 @@ function adminUpdateMatch() {
 
 </body>
 </html>
-
