@@ -76,6 +76,12 @@
         letter-spacing: 0.05em;
       }
 
+      .tournament-header {
+        padding: 80px 40px 0;  /* 80px = ความสูง navbar */
+        border-bottom: 1px solid #1a0000;
+        margin-bottom: 0;
+      }
+
       /* ถูกทั้งทีมและสกอร์ → เขียว */
       .pts-full .pts-label { color: rgba(0,185,70,0.7); }
       .pts-full .pts-value  { color: #00b946; }
@@ -98,6 +104,8 @@
       /* ไม่ได้ทาย → dim มาก */
       .pts-nopick .pts-label { color: #2a2a2a; }
       .pts-nopick .pts-value  { color: #2a2a2a; }
+
+      
     </style>
 </head>
 <body>
@@ -304,27 +312,34 @@
 </div>{# end .bracket-item-wrap #}
 {% endmacro %}
 
-<div class="navbar">
+<nav class="navbar">
   <div class="logo">PICK'EM</div>
   <div class="nav-links">
     <a href="/predict">Predict</a>
     <a href="/matches" class="active">Matches</a>
-    <a href="/tournament">Tournament</a>
+    <a href="/tournaments">Tournament</a>
     <a href="/leaderboard">Leaderboard</a>
     <a href="/teams">Teams</a>
-    
     {% if logged_in %}
-        {% if is_admin %}
-            <a href="/user/{{ session['username'] }}" class="user-name admin" style="text-decoration:none;color:#00ff99;font-weight:bold;">⚙ {{ session['username'] }}</a>
-        {% else %}
-            <a href="/user/{{ session['username'] }}" class="user-name" style="text-decoration:none;color:white;">{{ session['username'] }}</a>
-        {% endif %}
-        <a href="/logout" class="logout-link">Log out</a>
+      {% if is_admin %}
+      <a href="/admin/tournaments" style="color:#00ff99;font-weight:bold;font-size:0.75rem;">⚙ MANAGE</a>
+        <a href="/user/{{ session['username'] }}" class="nav-admin" style="text-decoration:none;color:#00ff99;font-weight:bold;">⚙ {{ session['username'] }}</a>
+      {% else %}
+        <a href="/user/{{ session['username'] }}" style="text-decoration:none;color:white;">{{ session['username'] }}</a>
+      {% endif %}
+      <span onclick="location.href='/logout'">Log out</span>
     {% else %}
-        <span>Profile</span>
+      <span onclick="location.href='/login'">Log in</span>
     {% endif %}
   </div>
+</nav>
+
+{% if tournament %}
+<div class="tournament-header">
+  <p class="tournament-header-name">{{ tournament.name | upper }}</p>
+  <p class="tournament-header-sub">BRACKET VIEW{% if tournament.date %} · {{ tournament.date }}{% endif %}</p>
 </div>
+{% endif %}
 
 <div class="tournament-bracket">
 

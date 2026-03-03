@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Tournaments – PICK'EM</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <style>
+    :root {
+      --red: #ff2a2a; --red-dark: #8b0000;
+      --bg: #0b0b0b; --card: #111; --border: #1e1e1e;
+      --text: #ece8e1; --muted: #666; --green: #00cc66; --gold: #ffd700;
+    }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; padding-bottom: 80px; }
+
+    .page-header {
+      padding: 40px 60px 24px;
+      border-bottom: 1px solid #1a0000;
+    }
+    .page-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2rem; font-weight: 900; color: var(--red);
+      letter-spacing: 0.08em; margin: 0 0 4px;
+    }
+    .page-sub { font-size: 0.72rem; letter-spacing: 0.2em; color: var(--muted); }
+
+    .content { padding: 32px 60px; display: grid; grid-template-columns: 1fr 420px; gap: 40px; align-items: start; }
+
+    /* ── Tournament List ── */
+    .section-label {
+      font-family: 'Orbitron', sans-serif; font-size: 0.7rem; font-weight: 700;
+      letter-spacing: 0.2em; color: var(--red); margin-bottom: 16px;
+    }
+    .tournament-card {
+      background: #140000; border: 1px solid #2a0000;
+      border-left: 3px solid transparent;
+      padding: 16px 20px; margin-bottom: 10px;
+      clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .tournament-card.is-active { border-left-color: var(--green); background: rgba(0,204,102,0.05); }
+    .tournament-card.is-inactive { border-left-color: #333; }
+    .t-card-top { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .t-name { font-family: 'Orbitron', sans-serif; font-size: 1rem; font-weight: 700; flex: 1; }
+    .t-status {
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 0.15em;
+      padding: 3px 10px; border-radius: 2px;
+    }
+    .t-status.active  { background: rgba(0,204,102,0.15); color: var(--green); border: 1px solid rgba(0,204,102,0.3); }
+    .t-status.inactive{ background: rgba(255,255,255,0.05); color: #555; border: 1px solid #2a2a2a; }
+    .t-meta { font-size: 0.75rem; color: var(--muted); display: flex; gap: 16px; flex-wrap: wrap; }
+    .t-teams-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .t-team-chip {
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em;
+      background: #1a0000; border: 1px solid #330000; padding: 2px 8px; border-radius: 3px; color: #aaa;
+    }
+    .t-actions { display: flex; gap: 8px; margin-top: 12px; }
+    .btn-sm {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em;
+      padding: 6px 14px; border: none; cursor: pointer;
+      clip-path: polygon(4px 0%, 100% 0%, calc(100% - 4px) 100%, 0% 100%);
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn-sm:hover { transform: translateY(-1px); }
+    .btn-activate   { background: var(--green); color: #000; }
+    .btn-deactivate { background: #1a1a1a; color: #888; border: 1px solid #333; clip-path: none; border-radius: 4px; }
+    .btn-deactivate:hover { background: #2a0000; color: #ff4444; border-color: #500; }
+    .btn-activate:hover { background: #00ff88; }
+    .btn-view { background: #1a1a1a; color: #aaa; border: 1px solid #333; clip-path: none; border-radius: 4px; }
+    .btn-view:hover { background: #222; color: white; }
+    .btn-delete { background: #300; color: #ff4444; border: 1px solid #500; clip-path: none; border-radius: 4px; }
+    .btn-delete:hover { background: #400; }
+    .btn-disabled { background: #1a1a1a; color: #333; cursor: not-allowed; }
+
+    /* ── Create Form ── */
+    .create-panel {
+      background: #0e0e0e; border: 1px solid #1e0000;
+      border-top: 2px solid var(--red);
+      padding: 24px; position: sticky; top: 20px;
+    }
+    .create-title {
+      font-family: 'Orbitron', sans-serif; font-size: 0.85rem; font-weight: 700;
+      letter-spacing: 0.15em; color: var(--red); margin: 0 0 20px;
+    }
+    .form-group { margin-bottom: 16px; }
+    .form-label {
+      display: block; font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 0.15em; color: var(--muted); margin-bottom: 6px; text-transform: uppercase;
+    }
+    .form-input {
+      width: 100%; background: #0b0b0b; border: 1px solid #1a0000;
+      border-bottom: 2px solid #1a0000; padding: 10px 12px;
+      font-size: 0.9rem; color: var(--text); outline: none;
+      font-family: 'Inter', sans-serif;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus { border-color: var(--red); }
+
+    /* Team selector grid */
+    .team-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;
+      max-height: 240px; overflow-y: auto;
+    }
+    .team-check-item {
+      display: flex; align-items: center; gap: 8px;
+      background: #0d0d0d; border: 1px solid #1a1a1a;
+      padding: 6px 10px; cursor: pointer; border-radius: 4px;
+      transition: border-color 0.15s, background 0.15s;
+      user-select: none;
+    }
+    .team-check-item.selected { border-color: var(--red); background: rgba(255,42,42,0.08); }
+    .team-check-item input[type=checkbox] { display: none; }
+    .team-logo-sm { width: 22px; height: 22px; object-fit: contain; }
+    .team-check-name { font-size: 0.78rem; font-weight: 600; flex: 1; }
+    .team-check-tag  { font-size: 0.62rem; color: var(--muted); font-family: 'Orbitron', sans-serif; }
+    .team-count-bar {
+      font-size: 0.7rem; color: var(--muted); margin-top: 8px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .team-count-num { font-family: 'Orbitron', sans-serif; font-size: 0.85rem; }
+    .team-count-num.full { color: var(--green); }
+    .team-count-num.over { color: var(--red); }
+
+    /* Add new team section */
+    .new-team-toggle {
+      font-size: 0.7rem; color: var(--red); cursor: pointer; letter-spacing: 0.1em;
+      font-weight: 700; margin-top: 8px; display: inline-flex; align-items: center; gap: 6px;
+    }
+    .new-team-form { display: none; margin-top: 10px; }
+    .new-team-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px; }
+    .new-team-list { margin-top: 8px; }
+    .new-team-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #1a0000; border: 1px solid #330000;
+      padding: 3px 10px; border-radius: 3px; font-size: 0.72rem; margin: 3px;
+    }
+    .new-team-chip button { background: none; border: none; color: var(--red); cursor: pointer; font-size: 12px; }
+
+    .btn-create {
+      width: 100%; padding: 12px; background: var(--red); color: white;
+      font-family: 'Orbitron', sans-serif; font-size: 0.8rem; font-weight: 700;
+      letter-spacing: 0.15em; border: none; cursor: pointer; margin-top: 16px;
+      clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+      transition: background 0.2s;
+    }
+    .btn-create:hover { background: #e02020; }
+    .btn-create:disabled { background: #2a0000; color: #555; cursor: not-allowed; }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+      background: #1a1a1a; border: 1px solid #333; border-left: 3px solid var(--red);
+      padding: 12px 20px; font-size: 0.82rem; font-weight: 600;
+      opacity: 0; transform: translateY(8px); transition: all 0.25s;
+      pointer-events: none; max-width: 320px;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.ok   { border-left-color: var(--green); }
+    .toast.err  { border-left-color: var(--red); }
+
+    @media (max-width: 900px) {
+      .content { grid-template-columns: 1fr; }
+      .page-header, .content { padding-left: 20px; padding-right: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="logo">PICK'EM</div>
+  <div class="nav-links">
+    <a href="/predict">Predict</a>
+    <a href="/matches">Matches</a>
+    <a href="/tournaments">Tournament</a>
+    <a href="/leaderboard">Leaderboard</a>
+    <a href="/teams">Teams</a>
+    {% if logged_in %}
+      {% if is_admin %}
+      <a href="/admin/tournaments" style="color:#00ff99;font-weight:bold;font-size:0.75rem;" class="active">⚙ MANAGE</a>
+        <a href="/user/{{ session['username'] }}" class="nav-admin" style="text-decoration:none;color:#00ff99;font-weight:bold;">⚙ {{ session['username'] }}</a>
+      {% else %}
+        <a href="/user/{{ session['username'] }}" style="text-decoration:none;color:white;">{{ session['username'] }}</a>
+      {% endif %}
+      <span onclick="location.href='/logout'">Log out</span>
+    {% else %}
+      <span onclick="location.href='/login'">Log in</span>
+    {% endif %}
+  </div>
+</nav>
+
+<div class="page-header">
+  <h1 class="page-title">TOURNAMENT MANAGER</h1>
+  <p class="page-sub">CREATE AND MANAGE PICK'EM TOURNAMENTS</p>
+</div>
+
+<div class="content">
+
+  <!-- ── LEFT: Tournament list ── -->
+  <div>
+    <p class="section-label">ALL TOURNAMENTS</p>
+
+    {% for t in tournaments %}
+    <div class="tournament-card {{ 'is-active' if t.is_active else 'is-inactive' }}" id="tcard-{{ t.tournament_id }}">
+      <div class="t-card-top">
+        <span class="t-name">{{ t.name }}</span>
+        <span class="t-status {{ 'active' if t.is_active else 'inactive' }}">{{ 'ACTIVE' if t.is_active else 'INACTIVE' }}</span>
+      </div>
+      <div class="t-meta">
+        <span>ID: {{ t.tournament_id }}</span>
+        {% if t.date %}<span>📅 {{ t.date }}</span>{% endif %}
+        <span>👥 {{ t.teams | length }} teams</span>
+      </div>
+      <div class="t-teams-list">
+        {% for team in t.teams %}
+        <span class="t-team-chip">{{ team }}</span>
+        {% endfor %}
+      </div>
+      <div class="t-actions">
+        <button class="btn-sm {{ 'btn-deactivate' if t.is_active else 'btn-activate' }}"
+                onclick="toggleActive('{{ t.tournament_id }}', {{ 'true' if t.is_active else 'false' }})">
+          {{ 'DEACTIVATE' if t.is_active else 'SET ACTIVE' }}
+        </button>
+        <button class="btn-sm btn-view" onclick="location.href='/select_tournament/{{ t.tournament_id }}?next=/predict'">VIEW</button>
+        {% if t.tournament_id != 'vct-2026' %}
+        <button class="btn-sm btn-delete" onclick="deleteTournament('{{ t.tournament_id }}', '{{ t.name }}')">DELETE</button>
+        {% endif %}
+      </div>
+    </div>
+    {% else %}
+    <div style="color: var(--muted); font-size: 0.85rem; padding: 40px 0; text-align: center; border: 1px dashed #1a1a1a;">
+      No tournaments yet.
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- ── RIGHT: Create form ── -->
+  <div class="create-panel">
+    <p class="create-title">+ CREATE TOURNAMENT</p>
+
+    <div class="form-group">
+      <label class="form-label">Tournament Name</label>
+      <input type="text" class="form-input" id="t-name" placeholder="e.g. VCT 2027 Champions">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Date</label>
+      <input type="date" class="form-input" id="t-date">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Select 8 Teams</label>
+      <div class="team-grid" id="team-grid">
+        {% for team in all_teams %}
+        <label class="team-check-item" id="chip-{{ team.Shortname }}">
+          <input type="checkbox" value="{{ team.Shortname }}" onchange="onTeamToggle(this)">
+          {% if team.Logo %}
+          <img src="{{ team.Logo }}" class="team-logo-sm" onerror="this.style.display='none'">
+          {% endif %}
+          <span class="team-check-name">{{ team.Teamname }}</span>
+          <span class="team-check-tag">{{ team.Shortname }}</span>
+        </label>
+        {% endfor %}
+      </div>
+      <div class="team-count-bar">
+        <span>Selected</span>
+        <span class="team-count-num" id="team-count">0 / 8</span>
+      </div>
+    </div>
+
+    <!-- Add new team -->
+    <div>
+      <span class="new-team-toggle" onclick="toggleNewTeam()">
+        <span id="new-team-arrow">▶</span> Add new team not in DB
+      </span>
+      <div class="new-team-form" id="new-team-form">
+        <div class="new-team-row">
+          <input type="text" class="form-input" id="nt-name" placeholder="Team name">
+          <input type="text" class="form-input" id="nt-short" placeholder="Tag (e.g. T1)" maxlength="20">
+        </div>
+        <div class="new-team-row">
+          <input type="text" class="form-input" id="nt-region" placeholder="Region">
+          <input type="text" class="form-input" id="nt-logo" placeholder="Logo URL">
+        </div>
+        <button class="btn-sm btn-activate" style="margin-top:4px;" onclick="addNewTeam()">+ ADD TO LIST</button>
+        <div class="new-team-list" id="new-team-list"></div>
+      </div>
+    </div>
+
+    <button class="btn-create" id="create-btn" onclick="createTournament()" disabled>
+      CREATE TOURNAMENT
+    </button>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let selectedTeams = new Set();   // shortnames from DB
+let newTeams = [];               // [{name,shortname,region,logo}]
+
+function totalSelected() {
+  return selectedTeams.size + newTeams.length;
+}
+
+function updateCountBar() {
+  const n = totalSelected();
+  const el = document.getElementById('team-count');
+  el.textContent = `${n} / 8`;
+  el.className = 'team-count-num' + (n === 8 ? ' full' : n > 8 ? ' over' : '');
+  document.getElementById('create-btn').disabled = (n !== 8 || !document.getElementById('t-name').value.trim());
+}
+
+function onTeamToggle(cb) {
+  const label = cb.closest('.team-check-item');
+  if (cb.checked) {
+    if (totalSelected() >= 8) { cb.checked = false; toast('Maximum 8 teams', 'err'); return; }
+    selectedTeams.add(cb.value);
+    label.classList.add('selected');
+  } else {
+    selectedTeams.delete(cb.value);
+    label.classList.remove('selected');
+  }
+  updateCountBar();
+}
+
+function toggleNewTeam() {
+  const form = document.getElementById('new-team-form');
+  const arrow = document.getElementById('new-team-arrow');
+  const open = form.style.display === 'block';
+  form.style.display = open ? 'none' : 'block';
+  arrow.textContent = open ? '▶' : '▼';
+}
+
+function addNewTeam() {
+  const name    = document.getElementById('nt-name').value.trim();
+  const short   = document.getElementById('nt-short').value.trim().toUpperCase();
+  const region  = document.getElementById('nt-region').value.trim();
+  const logo    = document.getElementById('nt-logo').value.trim();
+
+  if (!name || !short) return toast('Name and tag are required', 'err');
+  if (totalSelected() >= 8) return toast('Maximum 8 teams', 'err');
+  if (newTeams.find(t => t.shortname === short) || selectedTeams.has(short))
+    return toast('Team already added', 'err');
+
+  newTeams.push({ name, shortname: short, region, logo });
+  renderNewTeams();
+  document.getElementById('nt-name').value = '';
+  document.getElementById('nt-short').value = '';
+  document.getElementById('nt-region').value = '';
+  document.getElementById('nt-logo').value = '';
+  updateCountBar();
+}
+
+function removeNewTeam(short) {
+  newTeams = newTeams.filter(t => t.shortname !== short);
+  renderNewTeams();
+  updateCountBar();
+}
+
+function renderNewTeams() {
+  const list = document.getElementById('new-team-list');
+  list.innerHTML = newTeams.map(t => `
+    <span class="new-team-chip">
+      ${t.shortname} — ${t.name}
+      <button onclick="removeNewTeam('${t.shortname}')">✕</button>
+    </span>
+  `).join('');
+}
+
+document.getElementById('t-name').addEventListener('input', updateCountBar);
+
+async function createTournament() {
+  const name = document.getElementById('t-name').value.trim();
+  const date = document.getElementById('t-date').value;
+  if (!name) return toast('Enter tournament name', 'err');
+  if (totalSelected() !== 8) return toast('Select exactly 8 teams', 'err');
+
+  const btn = document.getElementById('create-btn');
+  btn.disabled = true; btn.textContent = 'CREATING...';
+
+  try {
+    const res = await fetch('/admin/create_tournament', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ name, date, teams: [...selectedTeams], new_teams: newTeams })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      toast(`✓ Created: ${data.name}`, 'ok');
+      setTimeout(() => location.reload(), 1200);
+    } else {
+      toast(data.error || 'Failed to create', 'err');
+    }
+  } catch { toast('Network error', 'err'); }
+
+  btn.disabled = false; btn.textContent = 'CREATE TOURNAMENT';
+  updateCountBar();
+}
+
+async function toggleActive(tournament_id, currentlyActive) {
+  const action = currentlyActive ? 'Deactivate' : 'Activate';
+  try {
+    const res = await fetch('/admin/set_active_tournament', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ tournament_id, force: currentlyActive ? 'off' : 'on' })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      toast(`✓ Tournament ${data.is_active ? 'activated' : 'deactivated'}`, 'ok');
+      setTimeout(() => location.reload(), 800);
+    } else {
+      toast(data.error || 'Failed', 'err');
+    }
+  } catch { toast('Network error', 'err'); }
+}
+
+async function deleteTournament(tournament_id, name) {
+  if (!confirm(`Delete tournament "${name}"?\nThis will remove all matches and predictions.`)) return;
+  try {
+    const res = await fetch('/admin/delete_tournament', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ tournament_id })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      toast('✓ Deleted', 'ok');
+      document.getElementById(`tcard-${tournament_id}`)?.remove();
+    } else {
+      toast(data.error || 'Failed', 'err');
+    }
+  } catch { toast('Network error', 'err'); }
+}
+
+function toast(msg, type = 'ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast show ${type}`;
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>

@@ -124,24 +124,19 @@
   <div class="nav-links">
     <a href="/predict">Predict</a>
     <a href="/matches">Matches</a>
-    <a href="/tournament">Tournament</a>
+    <a href="/tournaments">Tournament</a>
     <a href="/leaderboard">Leaderboard</a>
     <a href="/teams">Teams</a>
     {% if logged_in %}
       {% if is_admin %}
-        <a href="/user/{{ session['username'] }}" class="nav-user" style="color:#00ff99;font-weight:bold;text-decoration:none;">⚙ {{ session['username'] }}</a>
+      <a href="/admin/tournaments" style="color:#00ff99;font-weight:bold;font-size:0.75rem;">⚙ MANAGE</a>
+        <a href="/user/{{ session['username'] }}" class="active" class="nav-admin" style="text-decoration:none;color:#00ff99;font-weight:bold;">⚙ {{ session['username'] }}</a>
       {% else %}
-        <a href="/user/{{ session['username'] }}" class="nav-user" style="text-decoration:none;color:rgba(255,255,255,0.9);">{{ session['username'] }}</a>
+        <a href="/user/{{ session['username'] }}" class="active" style="text-decoration:none;color:white;">{{ session['username'] }}</a>
       {% endif %}
-      <a href="/logout" class="nav-logout">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-          <polyline points="16,17 21,12 16,7"/>
-          <line x1="21" y1="12" x2="9" y2="12"/>
-        </svg>
-      </a>
+      <span onclick="location.href='/logout'">Log out</span>
     {% else %}
-      <a href="/login" class="nav-login-btn">LOG IN</a>
+      <span onclick="location.href='/login'">Log in</span>
     {% endif %}
   </div>
 </nav>
