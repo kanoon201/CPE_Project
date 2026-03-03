@@ -315,9 +315,9 @@
     
     {% if logged_in %}
         {% if is_admin %}
-            <span class="user-name admin">⚙ {{ session['username'] }}</span>
+            <a href="/user/{{ session['username'] }}" class="user-name admin" style="text-decoration:none;color:#00ff99;font-weight:bold;">⚙ {{ session['username'] }}</a>
         {% else %}
-            <span class="user-name">{{ session['username'] }}</span>
+            <a href="/user/{{ session['username'] }}" class="user-name" style="text-decoration:none;color:white;">{{ session['username'] }}</a>
         {% endif %}
         <a href="/logout" class="logout-link">Log out</a>
     {% else %}

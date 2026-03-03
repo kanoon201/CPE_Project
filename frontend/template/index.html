@@ -29,9 +29,9 @@
 
   {% if logged_in %}
       {% if is_admin %}
-          <span class="nav-user admin-user">⚙ {{ session['username'] }}</span>
+          <a href="/user/{{ session['username'] }}" class="nav-user admin-user" style="text-decoration:none;">⚙ {{ session['username'] }}</a>
       {% else %}
-          <span class="nav-user">{{ session['username'] }}</span>
+          <a href="/user/{{ session['username'] }}" class="nav-user" style="text-decoration:none;">{{ session['username'] }}</a>
       {% endif %}
       <a href="/logout" class="nav-logout">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

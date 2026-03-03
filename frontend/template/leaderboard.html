@@ -10,22 +10,26 @@
 <body>
 
 <!-- NAVBAR -->
-<nav class="navbar">
-    <div class="logo">PICK'EM</div>
-    <div class="nav-links">
-        <span onclick="location.href='/predict'">Predict</span>
-        <span onclick="location.href='/matches'">Matches</span>
-        <span onclick="location.href='/tournament'">Tournament</span>
-        <span onclick="location.href='/leaderboard'" class="active">Leaderboard</span>
-        <span onclick="location.href='/teams'">Teams</span>
-        {% if logged_in %}
-            <span>{{ username }}</span>
-            <span onclick="location.href='/logout'">Log out</span>
+<div class="navbar">
+  <div class="logo">PICK'EM</div>
+  <div class="nav-links">
+    <a href="/predict">Predict</a>
+    <a href="/matches">Matches</a>
+    <a href="/tournament">Tournament</a>
+    <a href="/leaderboard" class="active">Leaderboard</a>
+    <a href="/teams">Teams</a>
+    {% if logged_in %}
+        {% if is_admin %}
+            <a href="/user/{{ session['username'] }}" class="user-name admin" style="text-decoration:none;color:#00ff99;font-weight:bold;">⚙ {{ session['username'] }}</a>
         {% else %}
-            <span onclick="location.href='/login'">Log in</span>
+            <a href="/user/{{ session['username'] }}" class="user-name" style="text-decoration:none;color:white;">{{ session['username'] }}</a>
         {% endif %}
-    </div>
-</nav>
+        <a href="/logout" class="logout-link">Log out</a>
+    {% else %}
+        <span>Profile</span>
+    {% endif %}
+  </div>
+</div>
 
 <!-- PAGE HEADER -->
 <div class="lb-header">

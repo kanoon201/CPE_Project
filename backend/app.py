@@ -509,6 +509,142 @@ def api_matches():
         "user_predictions": user_predictions, 
     }
 
+@app.route("/user/<profile_username>")
+def user_profile(profile_username):
+    # ดึง match data จาก MongoDB
+    match_col = get_mongo_collection("pickem_matches")
+    matches = list(match_col.find())
+
+    # จัดกลุ่มตาม bracket/round
+    upper_rounds = {}
+    lower_rounds = {}
+    grand_rounds = {}
+    for m in matches:
+        bracket = m.get("bracket")
+        round_name = m.get("round")
+        if bracket == "upper":
+            upper_rounds.setdefault(round_name, []).append(m)
+        elif bracket == "lower":
+            lower_rounds.setdefault(round_name, []).append(m)
+        elif bracket == "grand":
+            grand_rounds.setdefault(round_name, []).append(m)
+
+    # ดึง team logos จาก MySQL
+    conn = get_mysql_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT Shortname, Teamname, Logo FROM Team")
+    team_logos = {row["Shortname"]: row for row in cursor.fetchall()}
+
+    # ดึง predictions ของ user นั้น
+    cursor.execute("SELECT User_id FROM User WHERE Username = %s", (profile_username,))
+    target_user = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    user_predictions = {}
+    if target_user:
+        conn2 = get_mysql_connection()
+        cursor2 = conn2.cursor(dictionary=True)
+        cursor2.execute("""
+            SELECT Match_id, Predict_Winner, Predict_Score
+            FROM Pickem_DATA WHERE User_id = %s
+        """, (target_user["User_id"],))
+        for r in cursor2.fetchall():
+            user_predictions[r["Match_id"]] = r
+        cursor2.close()
+        conn2.close()
+
+    # คำนวณ stats
+    ROUND_MULTIPLIER = {
+        "Upper Quarterfinals": 10, "Lower Round 1": 10,
+        "Upper Semifinals": 15,    "Lower Round 2": 15,
+        "Lower Round 3": 25,       "Upper Final": 30,
+        "Lower Final": 30,         "Grand Final": 40,
+    }
+    total_score = 0
+    correct_picks = 0
+    total_picks = len(user_predictions)
+
+    for m in matches:
+        if m.get("status") != "completed" or not m.get("winner"):
+            continue
+        pred = user_predictions.get(m["match_id"])
+        if not pred:
+            continue
+        multiplier = ROUND_MULTIPLIER.get(m.get("round", ""), 1)
+        t1_full = team_logos.get(m.get("team1", ""), {}).get("Teamname", m.get("team1", ""))
+        t2_full = team_logos.get(m.get("team2", ""), {}).get("Teamname", m.get("team2", ""))
+        aw = m["winner"]
+        pw = pred["Predict_Winner"]
+        winner_correct = (
+            (aw == m.get("team1") or aw == t1_full) and (pw == m.get("team1") or pw == t1_full)
+        ) or (
+            (aw == m.get("team2") or aw == t2_full) and (pw == m.get("team2") or pw == t2_full)
+        )
+        if winner_correct:
+            correct_picks += 1
+            if pred.get("Predict_Score") == m.get("score"):
+                total_score += multiplier
+            else:
+                total_score += multiplier / 2
+
+    # หา rank จาก leaderboard
+    conn3 = get_mysql_connection()
+    cursor3 = conn3.cursor(dictionary=True)
+    cursor3.execute("""
+        SELECT u.Username, pd.Match_id, pd.Predict_Winner, pd.Predict_Score
+        FROM User u LEFT JOIN Pickem_DATA pd ON u.User_id = pd.User_id
+    """)
+    all_rows = cursor3.fetchall()
+    cursor3.close()
+    conn3.close()
+
+    scores = {}
+    for row in all_rows:
+        uname = row["Username"]
+        if uname not in scores:
+            scores[uname] = 0
+        if not row["Match_id"] or not row["Predict_Winner"]:
+            continue
+        for m in matches:
+            if m.get("match_id") != row["Match_id"] or m.get("status") != "completed":
+                continue
+            multiplier = ROUND_MULTIPLIER.get(m.get("round", ""), 1)
+            t1_full = team_logos.get(m.get("team1", ""), {}).get("Teamname", m.get("team1", ""))
+            t2_full = team_logos.get(m.get("team2", ""), {}).get("Teamname", m.get("team2", ""))
+            aw = m.get("winner", "")
+            pw = row["Predict_Winner"]
+            winner_correct = (
+                (aw == m.get("team1") or aw == t1_full) and (pw == m.get("team1") or pw == t1_full)
+            ) or (
+                (aw == m.get("team2") or aw == t2_full) and (pw == m.get("team2") or pw == t2_full)
+            )
+            if winner_correct:
+                if row.get("Predict_Score") == m.get("score"):
+                    scores[uname] += multiplier
+                else:
+                    scores[uname] += multiplier / 2
+
+    sorted_users = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+    user_rank = next((i + 1 for i, (u, _) in enumerate(sorted_users) if u == profile_username), None)
+
+    return render_template(
+        "user_profile.html",
+        profile_username=profile_username,
+        upper_rounds=upper_rounds,
+        lower_rounds=lower_rounds,
+        grand_rounds=grand_rounds,
+        team_logos=team_logos,
+        user_predictions=user_predictions,
+        total_score=total_score,
+        correct_picks=correct_picks,
+        total_picks=total_picks,
+        user_rank=user_rank,
+        logged_in=("user_id" in session),
+        is_admin=(session.get("username") == "ADMIN"),
+    )
+
+
 if __name__ == '__main__':
     seed_bracket()
     app.run(host='0.0.0.0', port=5001, debug=True)
