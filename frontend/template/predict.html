@@ -10,26 +10,26 @@
 <body>
 
 <!-- NAVBAR (matches existing styles.css navbar) -->
-<nav class="navbar">
+<div class="navbar">
   <div class="logo">PICK'EM</div>
   <div class="nav-links">
-    <span onclick="location.href='/predict'" class="active">Predict</span>
-    <span onclick="location.href='/matches'">Matches</span>
-    <span onclick="location.href='/tournament'">Tournament</span>
-    {% if logged_in %}<span onclick="location.href='/leaderboard'">Leaderboard</span>{% endif %}
-    <span onclick="location.href='/teams'">Teams</span>
+    <a href="/predict" class="active">Predict</a>
+    <a href="/matches">Matches</a>
+    <a href="/tournament">Tournament</a>
+    <a href="/leaderboard">Leaderboard</a>
+    <a href="/teams">Teams</a>
     {% if logged_in %}
-      {% if is_admin %}
-        <span class="nav-admin" onclick="location.href='/admin'">⚙ {{ session['username'] }}</span>
-      {% else %}
-        <span>{{ session['username'] }}</span>
-      {% endif %}
-      <span onclick="location.href='/logout'">Log out</span>
+        {% if is_admin %}
+            <a href="/user/{{ session['username'] }}" class="user-name admin" style="text-decoration:none;color:#00ff99;font-weight:bold;">⚙ {{ session['username'] }}</a>
+        {% else %}
+            <a href="/user/{{ session['username'] }}" class="user-name" style="text-decoration:none;color:white;">{{ session['username'] }}</a>
+        {% endif %}
+        <a href="/logout" class="logout-link">Log out</a>
     {% else %}
-      <span onclick="location.href='/login'">Log in</span>
+        <span>Profile</span>
     {% endif %}
   </div>
-</nav>
+</div>
 
 <!-- PAGE HEADER -->
 <div class="predict-header">
@@ -483,8 +483,53 @@ async function adminSubmit(mid, t1, t2) {
       body: JSON.stringify({ match_id: mid, team1: t1, team2: t2, score, winner, status: 'completed' })
     });
 
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      toast(err.error || 'Failed to submit result', 'err');
+      btn.disabled = false;
+      btn.textContent = 'SUBMIT';
+      return;
+    }
+
     if (res.ok) {
       toast(`⚙ RESULT: ${winner} ${score}`, 'ok');
+
+      // อัปเดต card ของแมตช์ถัดไปทันที (รวมกรณีมีแค่ทีมเดียว)
+      try {
+        const apiRes = await fetch('/api/matches');
+        if (apiRes.ok) {
+          const apiData = await apiRes.json();
+          apiData.matches.forEach(m => {
+            if (m.match_id === mid) return;
+            const nextCard = document.querySelector(`[data-match-id="${m.match_id}"]`);
+            if (!nextCard) return;
+            const prev = matchState[m.match_id] || {};
+            const newT1 = m.team1 || '';
+            const newT2 = m.team2 || '';
+            const teamsChanged = (newT1 !== (prev.team1 || '')) || (newT2 !== (prev.team2 || ''));
+            if ((newT1 || newT2) && teamsChanged) {
+              updateTeams(nextCard, m.match_id, newT1, newT2, apiData.logos || {});
+              matchState[m.match_id] = { ...matchState[m.match_id], team1: newT1, team2: newT2 };
+              if (newT1 && newT2) {
+                const winnerSel = document.getElementById(`admin-winner-${m.match_id}`);
+                const scoreSel  = document.getElementById(`admin-score-${m.match_id}`);
+                const submitBtn = document.getElementById(`admin-submit-btn-${m.match_id}`);
+                if (winnerSel) {
+                  winnerSel.disabled = false;
+                  winnerSel.innerHTML = `<option value="">— select —</option><option value="${newT1}">${newT1}</option><option value="${newT2}">${newT2}</option>`;
+                }
+                if (scoreSel)  scoreSel.disabled  = false;
+                if (submitBtn) {
+                  submitBtn.disabled = false;
+                  submitBtn.setAttribute('onclick', `adminSubmit('${m.match_id}','${newT1}','${newT2}')`);
+                }
+                const assignRow = document.getElementById(`assign-row-${m.match_id}`);
+                if (assignRow) assignRow.style.display = 'none';
+              }
+            }
+          });
+        }
+      } catch(e) { /* silent */ }
 
       const card = document.querySelector(`[data-match-id="${mid}"]`);
       card.dataset.status = 'completed';
@@ -610,11 +655,30 @@ async function pollMatches() {
       // Skip if user is hovering this card
       if (userInteracting.has(mid)) return;
 
-      // ── Teams appeared (was TBD, now known) ──
-      if ((!prev.team1 || !prev.team2) && t1 && t2) {
-        updateTeams(card, mid, t1, t2, m.logos || {});
+      // ── Teams appeared or changed (trigger on any team update, even 1 team) ──
+      const teamsChanged = (t1 !== (prev.team1 || '')) || (t2 !== (prev.team2 || ''));
+      if ((t1 || t2) && teamsChanged) {
+        updateTeams(card, mid, t1, t2, data.logos || {});
         matchState[mid] = { ...matchState[mid], team1: t1, team2: t2 };
-        showLiveIndicator(card, 'Teams updated');
+        const bothNow = t1 && t2;
+        showLiveIndicator(card, bothNow ? 'Teams updated' : `${t1 || t2} waiting for opponent`);
+        if (bothNow) {
+          // enable admin dropdowns เมื่อมีทีมครบ
+          const winnerSel = document.getElementById(`admin-winner-${mid}`);
+          const scoreSel  = document.getElementById(`admin-score-${mid}`);
+          const submitBtn = document.getElementById(`admin-submit-btn-${mid}`);
+          if (winnerSel && winnerSel.disabled) {
+            winnerSel.disabled = false;
+            winnerSel.innerHTML = `<option value="">— select —</option><option value="${t1}">${t1}</option><option value="${t2}">${t2}</option>`;
+          }
+          if (scoreSel)  scoreSel.disabled  = false;
+          if (submitBtn && submitBtn.disabled) {
+            submitBtn.disabled = false;
+            submitBtn.setAttribute('onclick', `adminSubmit('${mid}','${t1}','${t2}')`);
+          }
+          const assignRow = document.getElementById(`assign-row-${mid}`);
+          if (assignRow) assignRow.style.display = 'none';
+        }
       }
 
       // ── Match just completed ──
@@ -651,6 +715,7 @@ async function pollMatches() {
 
 function updateTeams(card, mid, t1, t2, logos) {
   const teamsDiv = card.querySelector('.card-teams');
+  const bothKnown = t1 && t2;
 
   // Use TEAM_LOGOS global (from server render) first, then fall back to polling logos param
   function getLogoHTML(shortname) {
@@ -658,41 +723,83 @@ function updateTeams(card, mid, t1, t2, logos) {
     return url ? `<img src="${url}" alt="${shortname}">` : `<span>${shortname}</span>`;
   }
 
-  teamsDiv.innerHTML = `
-    <div class="team-pick" onclick="selectTeam('${mid}','${t1}',this)">
-      <div class="team-logo-box">${getLogoHTML(t1)}</div>
-      <span class="team-tag">${t1}</span>
-    </div>
-    <div class="card-vs"><span>VS</span></div>
-    <div class="team-pick" onclick="selectTeam('${mid}','${t2}',this)">
-      <div class="team-logo-box">${getLogoHTML(t2)}</div>
-      <span class="team-tag">${t2}</span>
-    </div>
-  `;
-
-  // Show LOCK IN footer if not there
-  if (!card.querySelector('.card-foot')) {
-    const adminPanel = card.querySelector('.admin-panel');
-    const foot = document.createElement('div');
-    foot.className = 'card-foot';
-    foot.innerHTML = `
-      <div class="score-group">
-        <span class="score-heading">SCORE</span>
-        <div class="score-opts">
-          <button class="score-opt" data-score="2-0" onclick="selectScore('${mid}','2-0',this)">2-0</button>
-          <button class="score-opt" data-score="2-1" onclick="selectScore('${mid}','2-1',this)">2-1</button>
-        </div>
-      </div>
-      <button class="lock-btn" onclick="submitPick('${mid}')">LOCK IN</button>
-    `;
-    if (adminPanel) adminPanel.before(foot);
-    else card.appendChild(foot);
+  function teamSlotHTML(team) {
+    if (team) {
+      return `
+        <div class="team-pick${bothKnown ? ` onclick_placeholder` : ' is-locked'}" ${bothKnown ? `onclick="selectTeam('${mid}','${team}',this)"` : ''}>
+          <div class="team-logo-box">${getLogoHTML(team)}</div>
+          <span class="team-tag">${team}</span>
+        </div>`;
+    } else {
+      return `
+        <div class="tbd-slot-inline">
+          <div class="team-logo-box"><span>?</span></div>
+          <span class="team-tag" style="color:#555;">TBD</span>
+        </div>`;
+    }
   }
 
-  // Update badge
-  const badge = card.querySelector('.card-badge');
-  badge.className = 'card-badge upcoming';
-  badge.textContent = 'UPCOMING';
+  if (bothKnown) {
+    teamsDiv.innerHTML = `
+      <div class="team-pick" onclick="selectTeam('${mid}','${t1}',this)">
+        <div class="team-logo-box">${getLogoHTML(t1)}</div>
+        <span class="team-tag">${t1}</span>
+      </div>
+      <div class="card-vs"><span>VS</span></div>
+      <div class="team-pick" onclick="selectTeam('${mid}','${t2}',this)">
+        <div class="team-logo-box">${getLogoHTML(t2)}</div>
+        <span class="team-tag">${t2}</span>
+      </div>
+    `;
+    // Show LOCK IN footer only when both teams are known
+    if (!card.querySelector('.card-foot')) {
+      const adminPanel = card.querySelector('.admin-panel');
+      const foot = document.createElement('div');
+      foot.className = 'card-foot';
+      foot.innerHTML = `
+        <div class="score-group">
+          <span class="score-heading">SCORE</span>
+          <div class="score-opts">
+            <button class="score-opt" data-score="2-0" onclick="selectScore('${mid}','2-0',this)">2-0</button>
+            <button class="score-opt" data-score="2-1" onclick="selectScore('${mid}','2-1',this)">2-1</button>
+          </div>
+        </div>
+        <button class="lock-btn" onclick="submitPick('${mid}')">LOCK IN</button>
+      `;
+      if (adminPanel) adminPanel.before(foot);
+      else card.appendChild(foot);
+    }
+    // Update badge to UPCOMING
+    const badge = card.querySelector('.card-badge');
+    badge.className = 'card-badge upcoming';
+    badge.textContent = 'UPCOMING';
+  } else {
+    // มีทีมเดียว — แสดงทีมที่มีพร้อม TBD slot อีกฝั่ง ยังแสดง AWAITING badge
+    const team1HTML = t1
+      ? `<div class="team-pick is-locked">
+           <div class="team-logo-box">${getLogoHTML(t1)}</div>
+           <span class="team-tag">${t1}</span>
+         </div>`
+      : `<div class="tbd-slot-inline">
+           <div class="team-logo-box" style="background:#111;border:1px dashed #333;border-radius:8px;width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#444;">?</div>
+           <span class="team-tag" style="color:#555;">TBD</span>
+         </div>`;
+    const team2HTML = t2
+      ? `<div class="team-pick is-locked">
+           <div class="team-logo-box">${getLogoHTML(t2)}</div>
+           <span class="team-tag">${t2}</span>
+         </div>`
+      : `<div class="tbd-slot-inline">
+           <div class="team-logo-box" style="background:#111;border:1px dashed #333;border-radius:8px;width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#444;">?</div>
+           <span class="team-tag" style="color:#555;">TBD</span>
+         </div>`;
+    teamsDiv.innerHTML = `
+      ${team1HTML}
+      <div class="card-vs"><span>VS</span></div>
+      ${team2HTML}
+      <p class="tbd-msg" style="width:100%;text-align:center;font-size:11px;color:#444;margin-top:8px;letter-spacing:0.05em;">Waiting for opponent...</p>
+    `;
+  }
 }
 
 function markCompleted(card, mid, t1, t2, winner, score, userPreds) {

@@ -19,14 +19,14 @@
     <a href="/leaderboard">Leaderboard</a>
     <a href="/teams" class="active">Teams</a>
     {% if logged_in %}
-      {% if is_admin %}
-        <span class="user-name" style="color:#00ff99;font-weight:bold;">⚙ {{ session['username'] }}</span>
-      {% else %}
-        <span class="user-name">{{ session['username'] }}</span>
-      {% endif %}
-      <a href="/logout" class="logout-link">Log out</a>
+        {% if is_admin %}
+            <a href="/user/{{ session['username'] }}" class="user-name admin" style="text-decoration:none;color:#00ff99;font-weight:bold;">⚙ {{ session['username'] }}</a>
+        {% else %}
+            <a href="/user/{{ session['username'] }}" class="user-name" style="text-decoration:none;color:white;">{{ session['username'] }}</a>
+        {% endif %}
+        <a href="/logout" class="logout-link">Log out</a>
     {% else %}
-      <span>Profile</span>
+        <span>Profile</span>
     {% endif %}
   </div>
 </div>
