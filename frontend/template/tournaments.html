@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tournaments – PICK'EM</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <style>
+    :root {
+      --red: #ff2a2a; --bg: #0b0b0b; --card: #111; --border: #1e1e1e;
+      --text: #ece8e1; --muted: #555; --green: #00cc66; --gold: #ffd700;
+    }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; padding-bottom: 80px; }
+
+    .page-header { padding: 48px 60px 28px; border-bottom: 1px solid #1a0000; }
+    .page-title {
+      font-family: 'Orbitron', sans-serif; font-size: 2.2rem; font-weight: 900;
+      color: var(--red); letter-spacing: 0.08em; margin: 0 0 6px;
+    }
+    .page-sub { font-size: 0.72rem; letter-spacing: 0.2em; color: var(--muted); }
+
+    .section-wrap { padding: 36px 60px; }
+    .section-label {
+      font-family: 'Orbitron', sans-serif; font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 0.22em; color: var(--red); margin-bottom: 20px;
+    }
+
+    .t-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 16px; }
+
+    .t-card {
+      background: #0e0e0e; border: 1px solid #1a0000;
+      clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
+      padding: 22px 24px; cursor: pointer; position: relative;
+      transition: border-color 0.2s, background 0.2s, transform 0.15s;
+      text-decoration: none; color: inherit; display: block;
+    }
+    .t-card:hover { border-color: #ff2a2a44; background: #130000; transform: translateY(-2px); }
+    .t-card.current { border-color: var(--red); background: rgba(255,42,42,0.05); }
+
+    .t-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .t-name { font-family: 'Orbitron', sans-serif; font-size: 1.05rem; font-weight: 700; line-height: 1.3; }
+    .t-badge {
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 0.15em;
+      padding: 3px 10px; white-space: nowrap; flex-shrink: 0;
+      clip-path: polygon(4px 0%, 100% 0%, calc(100% - 4px) 100%, 0% 100%);
+    }
+    .t-badge.active   { background: rgba(0,204,102,0.15); color: var(--green); border: 1px solid rgba(0,204,102,0.3); }
+    .t-badge.current  { background: rgba(255,42,42,0.2);  color: var(--red);   border: 1px solid rgba(255,42,42,0.4); }
+
+    .t-meta { font-size: 0.73rem; color: var(--muted); display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+    .t-meta span { display: flex; align-items: center; gap: 5px; }
+
+    .t-teams { display: flex; flex-wrap: wrap; gap: 5px; }
+    .t-team-chip {
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em;
+      background: #1a0000; border: 1px solid #2a0000;
+      padding: 2px 8px; border-radius: 2px; color: #888;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .t-team-logo { width: 14px; height: 14px; object-fit: contain; }
+
+    .t-footer {
+      margin-top: 16px; padding-top: 14px; border-top: 1px solid #1a0000;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .t-select-btn {
+      font-family: 'Orbitron', sans-serif; font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 0.12em; padding: 8px 20px; border: none; cursor: pointer;
+      clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+      transition: background 0.2s;
+    }
+    .t-select-btn.go    { background: var(--red);   color: white; }
+    .t-select-btn.go:hover { background: #e02020; }
+    .t-select-btn.curr  { background: #1a1a1a; color: var(--muted); cursor: default; }
+    .t-current-label { font-size: 0.68rem; color: var(--red); font-weight: 700; letter-spacing: 0.1em; }
+
+    /* inactive/no active notice */
+    .empty-state {
+      text-align: center; padding: 60px 20px; color: var(--muted);
+    }
+    .empty-state h3 { font-family: 'Orbitron', sans-serif; font-size: 1rem; color: #333; margin-bottom: 8px; }
+    .empty-state p  { font-size: 0.82rem; }
+
+    @media (max-width: 700px) {
+      .section-wrap, .page-header { padding-left: 20px; padding-right: 20px; }
+      .t-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="logo">PICK'EM</div>
+  <div class="nav-links">
+    <a href="/predict">Predict</a>
+    <a href="/matches">Matches</a>
+    <a href="/tournaments" class="active">Tournament</a>
+    <a href="/leaderboard">Leaderboard</a>
+    <a href="/teams">Teams</a>
+    {% if logged_in %}
+      {% if is_admin %}
+      <a href="/admin/tournaments" style="color:#00ff99;font-weight:bold;font-size:0.75rem;">⚙ MANAGE</a>
+        <a href="/user/{{ session['username'] }}" class="nav-admin" style="text-decoration:none;color:#00ff99;font-weight:bold;">⚙ {{ session['username'] }}</a>
+      {% else %}
+        <a href="/user/{{ session['username'] }}" style="text-decoration:none;color:white;">{{ session['username'] }}</a>
+      {% endif %}
+      <span onclick="location.href='/logout'">Log out</span>
+    {% else %}
+      <span onclick="location.href='/login'">Log in</span>
+    {% endif %}
+  </div>
+</nav>
+
+<div class="page-header">
+  <h1 class="page-title">TOURNAMENTS</h1>
+  <p class="page-sub">SELECT A TOURNAMENT TO VIEW AND PREDICT</p>
+</div>
+
+{% if active_tournaments %}
+<div class="section-wrap">
+  <p class="section-label">● ACTIVE NOW</p>
+  <div class="t-grid">
+    {% for t in active_tournaments %}
+    {% set is_current = (t.tournament_id == current_tournament_id) %}
+    <a class="t-card {{ 'current' if is_current }}"
+       href="/select_tournament/{{ t.tournament_id }}?next=/predict">
+      <div class="t-card-head">
+        <span class="t-name">{{ t.name }}</span>
+        {% if is_current %}
+        <span class="t-badge current">VIEWING</span>
+        {% else %}
+        <span class="t-badge active">ACTIVE</span>
+        {% endif %}
+      </div>
+      <div class="t-meta">
+        {% if t.date %}<span>📅 {{ t.date }}</span>{% endif %}
+        <span>👥 {{ t.teams | length }} teams</span>
+      </div>
+      <div class="t-teams">
+        {% for short in t.teams %}
+        {% set team = team_logos.get(short, {}) %}
+        <span class="t-team-chip">
+          {% if team.get('Logo') %}
+          <img src="{{ team.Logo }}" class="t-team-logo" onerror="this.style.display='none'">
+          {% endif %}
+          {{ short }}
+        </span>
+        {% endfor %}
+      </div>
+      <div class="t-footer">
+        {% if is_current %}
+        <span class="t-current-label">▶ CURRENTLY VIEWING</span>
+        <span class="t-select-btn curr">SELECTED</span>
+        {% else %}
+        <span></span>
+        <span class="t-select-btn go">VIEW →</span>
+        {% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% if other_tournaments %}
+<div class="section-wrap" style="padding-top: 0;">
+  <p class="section-label" style="color: #444;">○ OTHER TOURNAMENTS</p>
+  <div class="t-grid">
+    {% for t in other_tournaments %}
+    {% set is_current = (t.tournament_id == current_tournament_id) %}
+    <a class="t-card" href="/select_tournament/{{ t.tournament_id }}?next=/predict"
+       style="opacity: 0.55; pointer-events: auto;">
+      <div class="t-card-head">
+        <span class="t-name" style="color: #666;">{{ t.name }}</span>
+        <span class="t-badge" style="background:#111; color:#444; border:1px solid #222; clip-path:none; border-radius:3px;">INACTIVE</span>
+      </div>
+      <div class="t-meta">
+        {% if t.date %}<span>📅 {{ t.date }}</span>{% endif %}
+        <span>👥 {{ t.teams | length }} teams</span>
+      </div>
+      <div class="t-teams">
+        {% for short in t.teams %}
+        <span class="t-team-chip" style="opacity:0.5;">{{ short }}</span>
+        {% endfor %}
+      </div>
+      <div class="t-footer">
+        <span></span>
+        <span class="t-select-btn go" style="background:#1a1a1a; color:#555;">VIEW →</span>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% if not active_tournaments and not other_tournaments %}
+<div class="empty-state">
+  <h3>NO TOURNAMENTS</h3>
+  <p>No tournaments available yet.</p>
+</div>
+{% endif %}
+
+</body>
+</html>
