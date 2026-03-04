@@ -19,13 +19,10 @@
     PICK'EM
   </div>
 <div class="landing-nav-links">
-  <a href="/predict">Predict</a>
-  <a href="/matches">Matches</a>
-  <a href="/tournament">Tournament</a>
-  {% if logged_in %}
-      <a href="/leaderboard">Leaderboard</a>
-  {% endif %}
-  <a href="/teams">Teams</a>
+  <a href="{% if logged_in %}/tournaments{% else %}/login{% endif %}">Tournament</a>
+  <a href="{% if logged_in %}/predict{% else %}/login{% endif %}">Predict</a>
+  <a href="{% if logged_in %}/matches{% else %}/login{% endif %}">Bracket</a>
+  <a href="{% if logged_in %}/teams{% else %}/login{% endif %}">Teams</a>
 
   {% if logged_in %}
       {% if is_admin %}
@@ -90,7 +87,7 @@
   </div>
 
   <!-- CTA -->
-  <a href="{% if logged_in %}/predict{% else %}/login{% endif %}" class="hero-cta">
+  <a href="{% if logged_in %}/tournaments{% else %}/login{% endif %}" class="hero-cta">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
       <circle cx="12" cy="12" r="3"/>
       <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>

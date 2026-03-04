@@ -501,7 +501,10 @@ def login():
             cursor.close(); conn.close()
         if user and user["Password"] == password:
             session["user_id"] = user["User_id"]; session["username"] = user["Username"]
-            return redirect(url_for("predict_page"))
+            next_page = request.args.get("next", "")
+            if next_page and next_page.startswith("/"):
+                return redirect(next_page)
+            return redirect(url_for("tournaments_page"))
         flash('Invalid username or password', 'error')
     return render_template('login.html')
 
