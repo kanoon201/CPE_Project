@@ -82,5 +82,5 @@ INSERT INTO TeamStats (Tournament_id, Shortname, Wins, Losses, Points) VALUES
 -- ---------------- useful queries ----------------
 -- SELECT * FROM User;
 -- SELECT * FROM Team;
--- SELECT * FROM TeamStats WHERE Tournament_id = 'vct-2026';
--- SELECT * FROM Pickem_DATA WHERE Tournament_id = 'vct-2026';
+-- SELECT * FROM TeamStats WHERE Tournament_id = 'vct-2067';
+-- SELECT * FROM Pickem_DATA;

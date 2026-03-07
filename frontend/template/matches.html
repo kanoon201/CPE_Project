@@ -77,9 +77,52 @@
       }
 
       .tournament-header {
-        padding: 80px 40px 0;  /* 80px = ความสูง navbar */
+        padding: 80px 40px 0;
         border-bottom: 1px solid #1a0000;
         margin-bottom: 0;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+      }
+
+      .tournament-header-left {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .bracket-legend {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        padding-bottom: 14px;
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .legend-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        flex-shrink: 0;
+      }
+
+      .legend-green  { background: rgba(0, 185, 70, 0.5);  border: 1px solid #00b946; box-shadow: 0 0 6px rgba(0,185,70,0.5); }
+      .legend-yellow { background: rgba(210, 170, 0, 0.5); border: 1px solid #d2aa00; box-shadow: 0 0 6px rgba(210,170,0,0.5); }
+      .legend-red    { background: rgba(200, 30, 30, 0.5); border: 1px solid #c81e1e; box-shadow: 0 0 6px rgba(200,30,30,0.5); }
+      .legend-dim    { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.2); }
+
+      .legend-text {
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        color: rgba(255,255,255,0.65);
+        text-transform: uppercase;
+        white-space: nowrap;
       }
 
       /* ถูกทั้งทีมและสกอร์ → เขียว */
@@ -159,8 +202,8 @@
       <span class="score">{{ score_val }}</span>
     {%- endif -%}
   {%- else -%}
-    {# ทายทีมผิด → แดงรอบสกอร์ทีมที่ชนะจริง #}
-    {%- if this_is_winner -%}
+    {# ทายทีมผิด → แดงรอบสกอร์ทีมที่ทาย #}
+    {%- if user_picked_this -%}
       <span class="score score-box-highlight score-wrong-team">{{ score_val }}</span>
     {%- else -%}
       <span class="score">{{ score_val }}</span>
@@ -221,11 +264,12 @@
 
   {# team1 row class #}
   {%- set t1_is_winner = (aw == m.team1 or aw == t1_full) -%}
+  {%- set pw_is_t1 = (pw == m.team1 or pw == t1_full) -%}
   {%- if winner_correct and score_correct and t1_is_winner -%}
     {%- set row1_class = "row-correct" -%}
   {%- elif winner_correct and not score_correct and t1_is_winner -%}
     {%- set row1_class = "row-right-team" -%}
-  {%- elif not winner_correct and t1_is_winner -%}
+  {%- elif not winner_correct and pw_is_t1 -%}
     {%- set row1_class = "row-wrong" -%}
   {%- else -%}
     {%- set row1_class = "" -%}
@@ -233,11 +277,12 @@
 
   {# team2 row class #}
   {%- set t2_is_winner = (aw == m.team2 or aw == t2_full) -%}
+  {%- set pw_is_t2 = (pw == m.team2 or pw == t2_full) -%}
   {%- if winner_correct and score_correct and t2_is_winner -%}
     {%- set row2_class = "row-correct" -%}
   {%- elif winner_correct and not score_correct and t2_is_winner -%}
     {%- set row2_class = "row-right-team" -%}
-  {%- elif not winner_correct and t2_is_winner -%}
+  {%- elif not winner_correct and pw_is_t2 -%}
     {%- set row2_class = "row-wrong" -%}
   {%- else -%}
     {%- set row2_class = "" -%}
@@ -336,8 +381,30 @@
 
 {% if tournament %}
 <div class="tournament-header">
-  <p class="tournament-header-name">{{ tournament.name | upper }}</p>
-  <p class="tournament-header-sub">BRACKET VIEW{% if tournament.date %} · {{ tournament.date }}{% endif %}</p>
+  <div class="tournament-header-left">
+    <p class="tournament-header-name">{{ tournament.name | upper }}</p>
+    <p class="tournament-header-sub">BRACKET VIEW{% if tournament.date %} · {{ tournament.date }}{% endif %}</p>
+  </div>
+  {% if user_predictions is defined %}
+  <div class="bracket-legend">
+    <div class="legend-item">
+      <span class="legend-dot legend-green"></span>
+      <span class="legend-text">Correct Team + Score</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-dot legend-yellow"></span>
+      <span class="legend-text">Correct Team Only</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-dot legend-red"></span>
+      <span class="legend-text">Wrong Pick</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-dot legend-dim"></span>
+      <span class="legend-text">No Prediction</span>
+    </div>
+  </div>
+  {% endif %}
 </div>
 {% endif %}
 
@@ -345,7 +412,6 @@
 
   <!-- ================= UPPER ================= -->
   <div class="bracket-section upper-section">
-    <h2>Upper Bracket</h2>
     <div class="bracket-container">
       <svg class="connector-layer"></svg>
 
@@ -412,24 +478,44 @@ function drawConnectors(container) {
   svg.innerHTML = "";
   const cols = container.querySelectorAll(".bracket-col");
 
+  const isLower = container.closest(".lower-section") !== null;
+
   for (let i = 0; i < cols.length - 1; i++) {
-    // หา .bracket-item จริง (ไม่รวม pts-bar) ใน col นั้น
     const currentItems = cols[i].querySelectorAll(".bracket-item");
     const nextItems    = cols[i + 1].querySelectorAll(".bracket-item");
 
     currentItems.forEach((match, index) => {
-      const target = nextItems[Math.floor(index / 2)];
+      let targetIndex;
+      if (isLower && i === 0) {
+        targetIndex = index; // LR1→LR2: 1:1
+      } else {
+        targetIndex = Math.floor(index / 2); // 2:1
+      }
+
+      const target = nextItems[targetIndex];
       if (!target) return;
 
       const parentRect = container.getBoundingClientRect();
       const matchRect  = match.getBoundingClientRect();
       const targetRect = target.getBoundingClientRect();
 
-      // x1 = ขอบขวาของกล่อง, y1 = กึ่งกลางความสูงกล่อง (ไม่รวม pts bar)
-      const x1   = matchRect.right  - parentRect.left;
-      const y1   = matchRect.top + matchRect.height / 2 - parentRect.top;
-      const x2   = targetRect.left  - parentRect.left;
-      const y2   = targetRect.top + targetRect.height / 2 - parentRect.top;
+      const x1 = matchRect.right - parentRect.left;
+      const y1 = matchRect.top + matchRect.height / 2 - parentRect.top;
+      const x2 = targetRect.left - parentRect.left;
+
+      let y2;
+      if (isLower && (i === 0 || i === cols.length - 2)) {
+        const rows = target.querySelectorAll(".bracket-item-team");
+        if (rows.length >= 2) {
+          const bottomRow = rows[rows.length - 1].getBoundingClientRect();
+          y2 = bottomRow.top + bottomRow.height / 2 - parentRect.top;
+        } else {
+          y2 = targetRect.top + targetRect.height / 2 - parentRect.top;
+        }
+      } else {
+        y2 = targetRect.top + targetRect.height / 2 - parentRect.top;
+      }
+
       const midX = x1 + (x2 - x1) / 2;
 
       const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
