@@ -32,6 +32,8 @@ def get_mongo_collection(collection_name):
 
         db = client[db_name]
 
+        print("Using Mongo collection:", collection_name)
+
         return db["tournaments"]
 
     except Exception as e:

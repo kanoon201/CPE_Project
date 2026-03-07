@@ -174,10 +174,10 @@
 <!-- LEGEND -->
 <div class="legend-bar">
   <span style="font-size:11px;font-weight:700;letter-spacing:0.15em;color:#333;margin-right:4px;">RESULT KEY</span>
-  <div class="legend-item"><div class="legend-dot correct"></div>✓ ถูกทีม + สกอร์</div>
-  <div class="legend-item"><div class="legend-dot half"></div>△ ถูกทีม สกอร์ผิด</div>
-  <div class="legend-item"><div class="legend-dot wrong"></div>✗ ทีมผิด</div>
-  <div class="legend-item"><div class="legend-dot nopick"></div>ไม่ได้ทาย</div>
+  <div class="legend-item"><div class="legend-dot correct"></div>✓ Correct Team + Score</div>
+  <div class="legend-item"><div class="legend-dot half"></div>△ Correct Team Only</div>
+  <div class="legend-item"><div class="legend-dot wrong"></div>✗ Wrong Pick</div>
+  <div class="legend-item"><div class="legend-dot nopick"></div>No Prediction</div>
   <div class="legend-item" style="margin-left:auto;">
     <span style="color:#5599cc;font-weight:700;font-size:12px;">2-0</span>
     <span style="color:#555;font-size:11px;margin-left:4px;">= สกอร์ที่ทาย</span>
@@ -336,7 +336,6 @@
 
   <!-- UPPER -->
   <div class="bracket-section upper-section">
-    <h2>Upper Bracket</h2>
     <div class="bracket-container">
       <svg class="connector-layer"></svg>
       {% for round_name, matches in upper_rounds.items() %}
@@ -388,19 +387,43 @@ function drawConnectors(container) {
   const svg = container.querySelector(".connector-layer");
   svg.innerHTML = "";
   const cols = container.querySelectorAll(".bracket-col");
+  const isLower = container.closest(".lower-section") !== null;
+
   for (let i = 0; i < cols.length - 1; i++) {
     const currentItems = cols[i].querySelectorAll(".bracket-item");
     const nextItems    = cols[i + 1].querySelectorAll(".bracket-item");
+
     currentItems.forEach((match, index) => {
-      const target = nextItems[Math.floor(index / 2)];
+      let targetIndex;
+      if (isLower && i === 0) {
+        targetIndex = index;
+      } else {
+        targetIndex = Math.floor(index / 2);
+      }
+      const target = nextItems[targetIndex];
       if (!target) return;
+
       const parentRect = container.getBoundingClientRect();
       const matchRect  = match.getBoundingClientRect();
       const targetRect = target.getBoundingClientRect();
-      const x1   = matchRect.right  - parentRect.left;
-      const y1   = matchRect.top + matchRect.height / 2 - parentRect.top;
-      const x2   = targetRect.left  - parentRect.left;
-      const y2   = targetRect.top + targetRect.height / 2 - parentRect.top;
+
+      const x1 = matchRect.right - parentRect.left;
+      const y1 = matchRect.top + matchRect.height / 2 - parentRect.top;
+      const x2 = targetRect.left - parentRect.left;
+
+      let y2;
+      if (isLower && (i === 0 || i === cols.length - 2)) {
+        const rows = target.querySelectorAll(".bracket-item-team");
+        if (rows.length >= 2) {
+          const bottomRow = rows[rows.length - 1].getBoundingClientRect();
+          y2 = bottomRow.top + bottomRow.height / 2 - parentRect.top;
+        } else {
+          y2 = targetRect.top + targetRect.height / 2 - parentRect.top;
+        }
+      } else {
+        y2 = targetRect.top + targetRect.height / 2 - parentRect.top;
+      }
+
       const midX = x1 + (x2 - x1) / 2;
       const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
       path.setAttribute("d", `M ${x1} ${y1} H ${midX} V ${y2} H ${x2}`);

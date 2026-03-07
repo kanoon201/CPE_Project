@@ -58,6 +58,7 @@ def get_current_tournament_id():
     return None
 
 def get_team_logos_for_tournament(tournament_id):
+    # โหลดเฉพาะทีมที่อยู่ใน tournament นี้ (สำหรับ predict/bracket)
     t = get_tournament(tournament_id)
     if not t:
         return {}
@@ -68,6 +69,15 @@ def get_team_logos_for_tournament(tournament_id):
     cursor = conn.cursor(dictionary=True)
     placeholders = ",".join(["%s"] * len(team_list))
     cursor.execute(f"SELECT Shortname, Teamname, Logo FROM Team WHERE Shortname IN ({placeholders})", team_list)
+    result = {row["Shortname"]: row for row in cursor.fetchall()}
+    cursor.close(); conn.close()
+    return result
+
+def get_all_team_logos():
+    # โหลดทีมทั้งหมดจาก DB (สำหรับ admin assign dropdown)
+    conn = get_mysql_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT Shortname, Teamname, Logo FROM Team ORDER BY Shortname")
     result = {row["Shortname"]: row for row in cursor.fetchall()}
     cursor.close(); conn.close()
     return result
@@ -533,6 +543,58 @@ def admin_tournaments():
         logged_in=True, is_admin=True,
         all_tournaments=tournaments, current_tournament_id=get_current_tournament_id()
     )
+
+@app.route("/admin/add_team", methods=["POST"])
+def admin_add_team():
+    if session.get("username") != "ADMIN":
+        return {"error": "unauthorized"}, 403
+    data = request.json
+    name      = data.get("name", "").strip()
+    shortname = data.get("shortname", "").strip().upper()
+    region    = data.get("region", "").strip()
+    logo      = data.get("logo", "").strip()
+    if not name or not shortname:
+        return {"error": "Name and shortname required"}, 400
+    conn = get_mysql_connection(); cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT Shortname FROM Team WHERE Shortname = %s", (shortname,))
+    if cursor.fetchone():
+        cursor.close(); conn.close()
+        return {"error": f"Shortname '{shortname}' already exists"}, 409
+    cursor.execute(
+        "INSERT INTO Team (Teamname, Shortname, Region, Logo) VALUES (%s, %s, %s, %s)",
+        (name, shortname, region, logo)
+    )
+    conn.commit(); cursor.close(); conn.close()
+    return {"status": "success", "shortname": shortname}
+
+@app.route("/admin/edit_team", methods=["POST"])
+def admin_edit_team():
+    if session.get("username") != "ADMIN":
+        return {"error": "unauthorized"}, 403
+    data = request.json
+    shortname = data.get("shortname", "").strip().upper()
+    name      = data.get("name", "").strip()
+    region    = data.get("region", "").strip()
+    logo      = data.get("logo", "").strip()
+    conn = get_mysql_connection(); cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE Team SET Teamname=%s, Region=%s, Logo=%s WHERE Shortname=%s",
+        (name, region, logo, shortname)
+    )
+    conn.commit(); cursor.close(); conn.close()
+    return {"status": "success"}
+
+@app.route("/admin/delete_team", methods=["POST"])
+def admin_delete_team():
+    if session.get("username") != "ADMIN":
+        return {"error": "unauthorized"}, 403
+    data = request.json
+    shortname = data.get("shortname", "").strip().upper()
+    conn = get_mysql_connection(); cursor = conn.cursor()
+    cursor.execute("DELETE FROM TeamStats WHERE Shortname=%s", (shortname,))
+    cursor.execute("DELETE FROM Team WHERE Shortname=%s", (shortname,))
+    conn.commit(); cursor.close(); conn.close()
+    return {"status": "success"}
 
 @app.route("/admin/create_tournament", methods=["POST"])
 def admin_create_tournament():
