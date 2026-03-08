@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ profile_username }}'s Bracket – PICK'EM</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='bracket_styles.css') }}">
+    <style>
+      /* ── Profile Header ── */
+      .profile-header {
+        padding: 32px 60px 20px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        border-bottom: 1px solid #1a0000;
+        background: linear-gradient(135deg, #1a0505 0%, #0d0000 60%, #0a0a0a 100%);
+      }
+      .profile-avatar {
+        width: 60px; height: 60px;
+        border-radius: 50%;
+        background: #220000;
+        border: 2px solid #ff2a2a;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.6rem; font-weight: 900;
+        color: #ff2a2a;
+        box-shadow: 0 0 20px rgba(255,42,42,0.3);
+        flex-shrink: 0;
+      }
+      .profile-info { flex: 1; }
+      .profile-name {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.6rem; font-weight: 900;
+        color: #ece8e1; letter-spacing: 0.08em;
+        margin: 0 0 4px;
+      }
+      .profile-sub {
+        font-size: 0.7rem; letter-spacing: 0.2em;
+        color: #555; font-weight: 700;
+        text-transform: uppercase;
+      }
+      .profile-stats {
+        display: flex; gap: 32px;
+      }
+      .pstat {
+        display: flex; flex-direction: column; align-items: center;
+      }
+      .pstat-num {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.4rem; font-weight: 900;
+        color: #ff2a2a;
+      }
+      .pstat-label {
+        font-size: 0.6rem; letter-spacing: 0.18em;
+        color: #555; font-weight: 700; text-transform: uppercase;
+        margin-top: 2px;
+      }
+      .pstat-divider { width: 1px; height: 36px; background: #1a0000; }
+
+      /* ── Row highlight ── */
+      .bracket-item-team.row-correct {
+        background: rgba(0, 185, 70, 0.30) !important;
+        border-bottom-color: rgba(0,185,70,0.25) !important;
+      }
+      .bracket-item-team.row-right-team {
+        background: rgba(210, 170, 0, 0.30) !important;
+        border-bottom-color: rgba(210,170,0,0.25) !important;
+      }
+      .bracket-item-team.row-wrong {
+        background: rgba(200, 30, 30, 0.35) !important;
+        border-bottom-color: rgba(200,30,30,0.25) !important;
+      }
+      .bracket-item:not([data-completed]) .bracket-item-team:not([class*="row-"]) {
+        opacity: 1;
+      }
+
+      /* ── Points bar ── */
+      .bracket-item-wrap { display: flex; flex-direction: column; align-items: flex-start; }
+      .bracket-pts-bar {
+        display: flex; align-items: center; justify-content: space-between;
+        width: 220px; padding: 3px 10px; margin-top: 4px;
+        border-radius: 4px; border: 1px solid #1a0000; background: #0d0000;
+        font-family: 'Inter', 'Rajdhani', sans-serif;
+      }
+      .pts-label { font-size: 9px; font-weight: 700; letter-spacing: 0.15em; color: #444; text-transform: uppercase; }
+      .pts-value { font-size: 12px; font-weight: 700; letter-spacing: 0.05em; }
+      .pts-full .pts-label { color: rgba(0,185,70,0.7); }
+      .pts-full .pts-value  { color: #00b946; }
+      .pts-full { border-top-color: rgba(0,185,70,0.2); background: rgba(0,185,70,0.06); }
+      .pts-half .pts-label { color: rgba(210,170,0,0.7); }
+      .pts-half .pts-value  { color: #d2aa00; }
+      .pts-half { border-top-color: rgba(210,170,0,0.2); background: rgba(210,170,0,0.06); }
+      .pts-zero .pts-label { color: rgba(200,30,30,0.7); }
+      .pts-zero .pts-value  { color: #c81e1e; }
+      .pts-zero { border-top-color: rgba(200,30,30,0.2); background: rgba(200,30,30,0.06); }
+      .pts-pending .pts-value { color: #3a3a3a; }
+      .pts-tbd { color: #3a3a3a !important; }
+      .pts-nopick .pts-label { color: #2a2a2a; }
+      .pts-nopick .pts-value  { color: #2a2a2a; }
+
+      /* ── Legend ── */
+      .legend-bar {
+        display: flex; align-items: center; gap: 20px;
+        padding: 10px 60px;
+        background: #080808;
+        border-bottom: 1px solid #111;
+        flex-wrap: wrap;
+      }
+      .legend-item { display: flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 600; letter-spacing: 0.05em; color: #555; }
+      .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+      .legend-dot.correct   { background: rgba(0,185,70,0.6); }
+      .legend-dot.half      { background: rgba(210,170,0,0.6); }
+      .legend-dot.wrong     { background: rgba(200,30,30,0.5); }
+      .legend-dot.nopick    { background: #222; border: 1px solid #333; }
+
+      .pred-score { font-weight: bold; color: #5599cc; font-size: 0.85em; }
+      .is-own-profile { display: none; }
+    </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="logo">PICK'EM</div>
+  <div class="nav-links">
+    <a href="/tournaments">Tournament</a>
+    <a href="/predict">Predict</a>
+    <a href="/matches">Bracket</a>
+    <a href="/leaderboard">Leaderboard</a>
+    <a href="/teams">Teams</a>
+    {% if logged_in %}
+      {% if is_admin %}
+      <a href="/admin/tournaments" style="color:#00ff99;font-weight:bold;font-size:0.75rem;">⚙ MANAGE</a>
+        <a href="/user/{{ session['username'] }}" class="active" class="nav-admin" style="text-decoration:none;color:#00ff99;font-weight:bold;">⚙ {{ session['username'] }}</a>
+      {% else %}
+        <a href="/user/{{ session['username'] }}" class="active" style="text-decoration:none;color:white;">{{ session['username'] }}</a>
+      {% endif %}
+      <span onclick="location.href='/logout'">Log out</span>
+    {% else %}
+      <span onclick="location.href='/login'">Log in</span>
+    {% endif %}
+  </div>
+</nav>
+
+<!-- PROFILE HEADER -->
+<div class="profile-header">
+  <div class="profile-avatar">{{ profile_username[0] | upper }}</div>
+  <div class="profile-info">
+    <h1 class="profile-name">{{ profile_username }}</h1>
+    <p class="profile-sub">VCT 2026 · PICK'EM PREDICTIONS</p>
+  </div>
+  <div class="profile-stats">
+    <div class="pstat">
+      <span class="pstat-num">{{ total_score | int }}</span>
+      <span class="pstat-label">TOTAL PTS</span>
+    </div>
+    <div class="pstat-divider"></div>
+    <div class="pstat">
+      <span class="pstat-num">{{ correct_picks }}</span>
+      <span class="pstat-label">CORRECT</span>
+    </div>
+    <div class="pstat-divider"></div>
+    <div class="pstat">
+      <span class="pstat-num">{{ total_picks }}</span>
+      <span class="pstat-label">TOTAL PICKS</span>
+    </div>
+    <div class="pstat-divider"></div>
+    <div class="pstat">
+      <span class="pstat-num">#{{ user_rank or '—' }}</span>
+      <span class="pstat-label">RANK</span>
+    </div>
+  </div>
+</div>
+
+<!-- LEGEND -->
+<div class="legend-bar">
+  <span style="font-size:11px;font-weight:700;letter-spacing:0.15em;color:#333;margin-right:4px;">RESULT KEY</span>
+  <div class="legend-item"><div class="legend-dot correct"></div>✓ Correct Team + Score</div>
+  <div class="legend-item"><div class="legend-dot half"></div>△ Correct Team Only</div>
+  <div class="legend-item"><div class="legend-dot wrong"></div>✗ Wrong Pick</div>
+  <div class="legend-item"><div class="legend-dot nopick"></div>No Prediction</div>
+  <div class="legend-item" style="margin-left:auto;">
+    <span style="color:#5599cc;font-weight:700;font-size:12px;">2-0</span>
+    <span style="color:#555;font-size:11px;margin-left:4px;">= สกอร์ที่ทาย</span>
+  </div>
+</div>
+
+{# ── MACRO: แสดงผลตาม prediction ของ user เป็นหลัก ── #}
+{% macro bracket_item(m) %}
+{%- set p = user_predictions.get(m.match_id) -%}
+{%- set pw = p.Predict_Winner if p else '' -%}
+{%- set ps = p.Predict_Score  if p else '' -%}
+{%- set pred_scores = ps.split('-') if ps else [] -%}
+
+{%- set round_mul = {
+  "Upper Quarterfinals": 10, "Lower Round 1": 10,
+  "Upper Semifinals":    15, "Lower Round 2": 15,
+  "Lower Round 3":       25, "Upper Final":   30,
+  "Lower Final":         30, "Grand Final":   40
+} -%}
+{%- set max_pts = round_mul.get(m.round, 10) -%}
+
+{# ── ตรวจว่าทายถูกไหม (เฉพาะ completed) ── #}
+{%- set is_completed = (m.status == "completed") -%}
+{%- set aw = m.winner if is_completed else '' -%}
+{%- set t1_full = team_logos[m.team1].Teamname if m.team1 in team_logos else m.team1 -%}
+{%- set t2_full = team_logos[m.team2].Teamname if m.team2 in team_logos else m.team2 -%}
+
+{%- if is_completed and p -%}
+  {%- set winner_correct = (
+      (aw == m.team1 or aw == t1_full) and (pw == m.team1 or pw == t1_full)
+    ) or (
+      (aw == m.team2 or aw == t2_full) and (pw == m.team2 or pw == t2_full)
+    )
+  -%}
+  {%- set score_correct = (ps == m.score) -%}
+  {%- if winner_correct and score_correct -%}
+    {%- set earned_pts = max_pts -%}{%- set pts_class = "pts-full" -%}{%- set result_icon = "✓" -%}{%- set result_color = "#00b946" -%}
+  {%- elif winner_correct -%}
+    {%- set earned_pts = (max_pts / 2)|int -%}{%- set pts_class = "pts-half" -%}{%- set result_icon = "△" -%}{%- set result_color = "#d2aa00" -%}
+  {%- else -%}
+    {%- set earned_pts = 0 -%}{%- set pts_class = "pts-zero" -%}{%- set result_icon = "✗" -%}{%- set result_color = "#c81e1e" -%}
+  {%- endif -%}
+{%- else -%}
+  {%- set winner_correct = false -%}
+  {%- set score_correct = false -%}
+  {%- set earned_pts = none -%}
+  {%- set pts_class = "pts-pending" -%}
+  {%- set result_icon = "" -%}
+  {%- set result_color = "" -%}
+{%- endif -%}
+
+{# ── user ทายทีมไหน → ทีมนั้นอยู่บน (row 1) ── #}
+{# ถ้าไม่มี pick หรือ TBD ก็แสดง team1/team2 ตามปกติ #}
+{%- set picked_is_t2 = (pw == m.team2 or pw == t2_full) and pw != '' -%}
+
+{%- if picked_is_t2 -%}
+  {%- set top_team    = m.team2 -%}
+  {%- set bottom_team = m.team1 -%}
+  {%- set top_pred_score    = pred_scores[0] if pred_scores else '' -%}
+  {%- set bottom_pred_score = pred_scores[1] if pred_scores|length > 1 else '' -%}
+{%- else -%}
+  {%- set top_team    = m.team1 -%}
+  {%- set bottom_team = m.team2 -%}
+  {%- set top_pred_score    = pred_scores[0] if pred_scores else '' -%}
+  {%- set bottom_pred_score = pred_scores[1] if pred_scores|length > 1 else '' -%}
+{%- endif -%}
+
+{# row class: ทีมที่ user ทายไว้ (top) ได้ highlight #}
+{%- if is_completed and p -%}
+  {%- if winner_correct and score_correct -%}
+    {%- set top_class = "row-correct" -%}
+  {%- elif winner_correct -%}
+    {%- set top_class = "row-right-team" -%}
+  {%- else -%}
+    {%- set top_class = "row-wrong" -%}
+  {%- endif -%}
+  {%- set bottom_class = "" -%}
+{%- else -%}
+  {%- set top_class = "" -%}
+  {%- set bottom_class = "" -%}
+{%- endif -%}
+
+<div class="bracket-item-wrap">
+  <div class="bracket-item">
+
+    {# ── TOP ROW: ทีมที่ user ทาย (หรือ team1 ถ้าไม่มี pick) ── #}
+    <div class="bracket-item-team {{ top_class }}">
+      {% if top_team and top_team in team_logos %}
+        <img src="{{ team_logos[top_team].Logo }}" class="bracket-logo">
+        <span class="team-name">{{ team_logos[top_team].Teamname }}</span>
+      {% else %}
+        <span class="team-name">{{ top_team or "TBD" }}</span>
+      {% endif %}
+      {%- if p and top_pred_score -%}
+        <span class="score pred-score">{{ top_pred_score }}</span>
+      {%- else -%}
+        <span class="score"></span>
+      {%- endif -%}
+    </div>
+
+    {# ── BOTTOM ROW: ทีมที่เหลือ ── #}
+    <div class="bracket-item-team {{ bottom_class }}">
+      {% if bottom_team and bottom_team in team_logos %}
+        <img src="{{ team_logos[bottom_team].Logo }}" class="bracket-logo">
+        <span class="team-name">{{ team_logos[bottom_team].Teamname }}</span>
+      {% else %}
+        <span class="team-name">{{ bottom_team or "TBD" }}</span>
+      {% endif %}
+      {%- if p and bottom_pred_score -%}
+        <span class="score pred-score">{{ bottom_pred_score }}</span>
+      {%- else -%}
+        <span class="score"></span>
+      {%- endif -%}
+    </div>
+
+    {# ── Result indicator เมื่อ completed ── #}
+    {% if is_completed and p %}
+    <div class="result-indicator" style="border-top:1px solid #1a0000;padding:3px 10px;display:flex;align-items:center;gap:6px;">
+      <span style="font-size:11px;font-weight:700;color:{{ result_color }};">{{ result_icon }}</span>
+      {% if winner_correct and score_correct %}
+        <span style="font-size:9px;letter-spacing:0.12em;color:{{ result_color }};">CORRECT TEAM + SCORE</span>
+      {% elif winner_correct %}
+        <span style="font-size:9px;letter-spacing:0.12em;color:{{ result_color }};">CORRECT TEAM</span>
+        <span style="font-size:9px;color:#333;margin-left:auto;">actual: {{ m.score }}</span>
+      {% else %}
+        <span style="font-size:9px;letter-spacing:0.12em;color:{{ result_color }};">WRONG PICK</span>
+        <span style="font-size:9px;color:#333;margin-left:auto;">actual: {{ m.winner }} {{ m.score }}</span>
+      {% endif %}
+    </div>
+    {% endif %}
+
+  </div>
+
+  {# ── POINTS BAR ── #}
+  {% if p %}
+  <div class="bracket-pts-bar {{ pts_class }}">
+    <span class="pts-label">POINTS</span>
+    {% if is_completed %}
+      <span class="pts-value">{{ earned_pts }} / {{ max_pts }}</span>
+    {% else %}
+      <span class="pts-value pts-tbd">? / {{ max_pts }}</span>
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="bracket-pts-bar pts-nopick">
+    <span class="pts-label">NO PICK</span>
+    <span class="pts-value">— / {{ max_pts }}</span>
+  </div>
+  {% endif %}
+
+</div>
+{% endmacro %}
+
+<!-- BRACKET -->
+<div class="tournament-bracket" style="padding:40px 60px;">
+
+  <!-- UPPER -->
+  <div class="bracket-section upper-section">
+    <div class="bracket-container">
+      <svg class="connector-layer"></svg>
+      {% for round_name, matches in upper_rounds.items() %}
+      <div class="bracket-col
+           {% if round_name == 'Upper Quarterfinals' %}upper-quarter{% endif %}
+           {% if round_name == 'Upper Semifinals' %}upper-semi{% endif %}
+           {% if round_name == 'Upper Final' %}upper-final{% endif %}">
+        <div class="bracket-col-label">{{ round_name }}</div>
+        {% for m in matches %}{{ bracket_item(m) }}{% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- LOWER -->
+  <div class="bracket-section lower-section">
+    <div class="bracket-container">
+      <svg class="connector-layer"></svg>
+      {% for round_name, matches in lower_rounds.items() %}
+      <div class="bracket-col
+           {% if round_name == 'Lower Round 1' %}lower-round-1{% endif %}
+           {% if round_name == 'Lower Round 2' %}lower-round-2{% endif %}
+           {% if round_name == 'Lower Round 3' %}lower-round-3{% endif %}
+           {% if round_name == 'Lower Final' %}lower-final{% endif %}">
+        <div class="bracket-col-label">{{ round_name }}</div>
+        {% for m in matches %}{{ bracket_item(m) }}{% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- GRAND FINAL -->
+  <div class="bracket-section grand-final-section">
+    <div class="bracket-container">
+      <svg class="connector-layer"></svg>
+      {% for round_name, matches in grand_rounds.items() %}
+      <div class="bracket-col grand-final">
+        <div class="bracket-col-label">{{ round_name }}</div>
+        {% for m in matches %}{{ bracket_item(m) }}{% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+
+<script>
+function drawConnectors(container) {
+  const svg = container.querySelector(".connector-layer");
+  svg.innerHTML = "";
+  const cols = container.querySelectorAll(".bracket-col");
+  const isLower = container.closest(".lower-section") !== null;
+
+  for (let i = 0; i < cols.length - 1; i++) {
+    const currentItems = cols[i].querySelectorAll(".bracket-item");
+    const nextItems    = cols[i + 1].querySelectorAll(".bracket-item");
+
+    currentItems.forEach((match, index) => {
+      let targetIndex;
+      if (isLower && i === 0) {
+        targetIndex = index;
+      } else {
+        targetIndex = Math.floor(index / 2);
+      }
+      const target = nextItems[targetIndex];
+      if (!target) return;
+
+      const parentRect = container.getBoundingClientRect();
+      const matchRect  = match.getBoundingClientRect();
+      const targetRect = target.getBoundingClientRect();
+
+      const x1 = matchRect.right - parentRect.left;
+      const y1 = matchRect.top + matchRect.height / 2 - parentRect.top;
+      const x2 = targetRect.left - parentRect.left;
+
+      let y2;
+      if (isLower && (i === 0 || i === cols.length - 2)) {
+        const rows = target.querySelectorAll(".bracket-item-team");
+        if (rows.length >= 2) {
+          const bottomRow = rows[rows.length - 1].getBoundingClientRect();
+          y2 = bottomRow.top + bottomRow.height / 2 - parentRect.top;
+        } else {
+          y2 = targetRect.top + targetRect.height / 2 - parentRect.top;
+        }
+      } else {
+        y2 = targetRect.top + targetRect.height / 2 - parentRect.top;
+      }
+
+      const midX = x1 + (x2 - x1) / 2;
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", `M ${x1} ${y1} H ${midX} V ${y2} H ${x2}`);
+      path.setAttribute("stroke", "#ff2a2a");
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke-width", "2");
+      svg.appendChild(path);
+    });
+  }
+}
+window.addEventListener("load",   () => document.querySelectorAll(".bracket-container").forEach(drawConnectors));
+window.addEventListener("resize", () => document.querySelectorAll(".bracket-container").forEach(drawConnectors));
+</script>
+
+</body>
+</html>

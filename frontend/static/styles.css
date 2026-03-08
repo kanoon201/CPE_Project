@@ -1,8 +1,11 @@
+/* ── Google Fonts ── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap');
+
 *{
     margin:0;
     padding:0;
     box-sizing:border-box;
-    font-family:'Orbitron',sans-serif;
+    font-family:'Inter',sans-serif;
   }
   
   body{
@@ -36,12 +39,22 @@
     font-weight:700;
     color:#ff2a2a;
     letter-spacing:2px;
+    font-family:'Orbitron',sans-serif;
+  }
+
+  .header h1{
+    font-size:40px;
+    color:#ff2a2a;
+    margin-bottom:10px;
+    font-family:'Orbitron',sans-serif;
   }
   
   .nav-links{
       display:flex;
       gap:30px;
       font-size:14px;
+      font-family:'Inter',sans-serif;
+      font-weight: 500;
   }
 
   .nav-links a {
@@ -74,12 +87,6 @@
     padding:60px;
   }
   
-  .header h1{
-    font-size:40px;
-    color:#ff2a2a;
-    margin-bottom:10px;
-  }
-  
   .tabs{
     display:flex;
     gap:30px;
@@ -95,301 +102,344 @@
     border-bottom:3px solid #ff2a2a;
     color:#ff2a2a;
   }
-
   
-  /* LOGIN BOX */
-  .login-box{
-    margin:40px 60px;
-    padding:40px;
-    background:linear-gradient(135deg,#1a0000,#000);
-    border:1px solid #ff2a2a;
-    border-radius:20px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
+  /* ══════════════════════════════
+     MATCH SECTION
+  ══════════════════════════════ */
+  .match-section {
+    padding: 0 48px 80px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
   }
-  
-  .login-box h2{
-    font-size:22px;
-    margin-bottom:10px;
-  }
-  
-  .login-box button{
-    background:#ff2a2a;
-    border:none;
-    padding:12px 25px;
-    border-radius:30px;
-    cursor:pointer;
-    font-weight:600;
-    transition:0.3s;
-  }
-  
-  .login-box button:hover{
-    background:white;
-    color:#ff2a2a;
-  }
-
-  .login-warning {
-    color: #ff4444;
-    margin-top: 10px;
-    font-size: 14px;
-    font-weight: bold;
-    text-align: center;
-
-  .login-container {
-    min-height: 100vh;
+  .match-section h2 {
+    grid-column: 1 / -1;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    color: #ff2a2a;
+    margin: 44px 0 10px;
     display: flex;
-    justify-content: center;
     align-items: center;
-    background: #0b0b0b;
+    gap: 14px;
   }
-  }
-
-  
-  /* MATCH SECTION */
-  .match-section{
-      padding:20px 60px 60px 60px;
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 20px;
+  .match-section h2::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, #ff2a2a55, transparent);
   }
 
-  .match-section h2{
-      grid-column: 1 / -1;
-      margin-bottom: 10px;
-      margin-top: 20px;
+  /* ── Card ── */
+  .match-card {
+    position: relative;
+    background: #111;
+    border: 1px solid #2a2a2a;
+    border-radius: 14px;
+    overflow: hidden;
+    transition: border-color .25s, transform .25s, box-shadow .25s;
+  }
+  .match-card:hover {
+    border-color: #ff2a2a66;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px #ff2a2a15;
+  }
+  .match-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #ff2a2a, transparent);
+    opacity: 0;
+    transition: opacity .25s;
+  }
+  .match-card:hover::before { opacity: 1; }
+
+  /* ── Card Header ── */
+  .match-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 18px;
+    border-bottom: 1px solid #1e1e1e;
+    background: #0e0e0e;
+  }
+  .match-card-header h4 {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: #555;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .match-bo-badge {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: #ff4444;
+    background: #ff2a2a18;
+    border: 1px solid #ff2a2a44;
+    padding: 2px 10px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-left: 8px;
   }
 
-  .match-card{
-      background:linear-gradient(135deg,#1a0000,#000);
-      border:1px solid #ff2a2a;
-      border-radius:20px;
-      padding:30px;
-      box-shadow:0 0 20px #ff000033;
+  /* ── Teams Row ──
+     Stack logo top, name below — no overflow */
+  .match-teams {
+    display: flex;
+    align-items: center;
+    padding: 24px 18px 20px;
+    gap: 8px;
   }
-  
-  .match-top{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
+  .team-side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;           /* prevent flex overflow */
   }
-
-  .match-card p {
-      text-align: center;
-  }
-
-  .match-card hr {
-      margin: 10px 0;
-  }
-  
-  .teams{
-    display:flex;
-    align-items:center;
-    gap:20px;
-    font-size:20px;
-  }
-  
-  .score-box{
-      display:flex;
-      gap:10px;
-      justify-content: center;
-      margin-top: 10px;
-  }
-  
-  .score-box input{
-    width:60px;
-    height:50px;
-    background:#000;
-    border:2px solid #ff2a2a;
-    color:white;
-    text-align:center;
-    font-size:20px;
-    border-radius:10px;
-  }
-  
-  .submit-btn{
-      margin-top:20px;
-      background:#ff2a2a;
-      padding:10px 20px;
-      border:none;
-      border-radius:20px;
-      cursor:pointer;
-      transition:0.3s;
-      display:block;
-      margin-left:auto;
-      margin-right:auto;
+  .team-side-right {
+    align-items: center;    /* same as left — symmetric */
   }
 
-  .submit-btn:hover{
-    background:white;
-    color:#ff2a2a;
+  /* ── Logo — BIG ── */
+  .match-team-logo {
+    width: 90px;
+    height: 90px;
+    object-fit: contain;
+    background: #1a1a1a;
+    border-radius: 14px;
+    padding: 10px;
+    border: 1px solid #2e2e2e;
+    transition: transform .2s;
+    flex-shrink: 0;
   }
-  
-  .result{
-    margin-top:15px;
-    color:#ff2a2a;
+  .match-card:hover .match-team-logo {
+    transform: scale(1.06);
   }
-  
-  @media(max-width:768px){
-    .login-box{
-      flex-direction:column;
-      gap:20px;
-      text-align:center;
-    }
-    .teams{
-      flex-direction:column;
-    }
+  .match-logo-placeholder {
+    width: 90px;
+    height: 90px;
+    background: #161616;
+    border: 1px dashed #2a2a2a;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #2e2e2e;
+    flex-shrink: 0;
   }
 
+  /* ── Team Name ── big, readable, no overflow */
+  .team1, .team2 {
+    font-family: 'Inter', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #f0f0f0;
+    text-align: center;
+    line-height: 1.1;
+    width: 100%;
+    word-break: break-word;
+  }
 
-/* TEAM SECTION */
-  .team-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 20px;
-  padding: 20px;
-}
+  .vs-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #2e2e2e;
+    flex-shrink: 0;
+    width: 36px;
+    text-align: center;
+    padding-bottom: 30px;
+  }
 
-.team-card {
-  border: 1px solid red;
-  border-radius: 12px;
-  padding: 16px;
-  background: linear-gradient(135deg, #1a0000, #000);
-  color: white;
-}
+  .status-pending {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: #2a2a2a;
+    text-align: center;
+    padding: 10px 0;
+  }
+  .status-waiting {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: #664400;
+    text-align: center;
+    padding: 8px 0;
+  }
 
-.team-card h2 {
-  margin-bottom: 8px;
-  color: #ff3b3b;
-}
+  .completed-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: #00cc66;
+    background: #00cc6615;
+    border: 1px solid #00cc6633;
+    padding: 4px 12px;
+    border-radius: 4px;
+    margin-bottom: 12px;
+  }
+  .final-score {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 2px;
+    margin: 4px 0;
+  }
+  .winner-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: #444;
+    margin-bottom: 14px;
+  }
 
-/* TEAM TABLE – RED BACKGROUND / BLACK TEXT */
-.team-table {
-  width: 95%;
-  margin: 1px auto;   /* ⬆️ ขยับขึ้น */
-  border-collapse: collapse;
-  background-color: #ff2a2a;   /* 🔴 พื้นหลังแดง */
-  color: #000;                 /* ⚫ ข้อความดำ */
-  border: 2px solid #000;
-}
+  .prediction-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: #333;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+  .prediction-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: #555;
+  }
+  .pred-correct { color: #00dd66; }
+  .pred-wrong   { color: #ff3333; }
+  .pred-score   { color: #3a3a3a; font-size: 14px; }
 
-.team-table th,
-.team-table td {
-  border: 1px solid #000;      /* เส้นตารางสีดำ */
-  padding: 12px;
-  text-align: center;
-}
+  /* ── Score Input ── */
+  .score-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 4px 0 12px;
+  }
+  .score-box input {
+    width: 60px;
+    height: 52px;
+    background: #161616;
+    border: 1px solid #2e2e2e;
+    color: #fff;
+    text-align: center;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    border-radius: 10px;
+    transition: border-color .2s, background .2s;
+  }
+  .score-box input:focus {
+    outline: none;
+    border-color: #ff2a2a;
+    background: #1a0000;
+  }
+  .score-dash {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 22px;
+    color: #333;
+  }
+  .prev-prediction {
+    text-align: center;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    letter-spacing: 1px;
+    color: #444;
+    margin-bottom: 10px;
+  }
 
-/* หัวตาราง */
-.team-table th {
-  background-color: #b80000;   /* 🔴 แดงเข้ม */
-  color: #000;                 /* ⚫ ตัวอักษรดำ */
-  font-weight: bold;
-}
+  /* ── Submit Button ── */
+  .submit-btn {
+    display: block;
+    width: 100%;
+    margin: 0;
+    background: #ff2a2a;
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 13px 20px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background .2s, color .2s, box-shadow .2s;
+    text-transform: uppercase;
+  }
+  .submit-btn:hover {
+    background: #fff;
+    color: #ff2a2a;
+    box-shadow: 0 0 20px #ff2a2a44;
+  }
+  .result {
+    margin-top: 10px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    letter-spacing: 1px;
+    color: #ff4444;
+    text-align: center;
+    min-height: 18px;
+  }
 
-/* แถวสลับสี */
-.team-table tr:nth-child(even) {
-  background-color: #ff4d4d;   /* 🔴 แดงอ่อน */
-}
+  /* ── Login box ── */
+  .login-box {
+    margin: 0 48px 30px;
+    padding: 28px 36px;
+    background: linear-gradient(135deg, #1a0000, #000);
+    border: 1px solid #ff2a2a44;
+    border-radius: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 0 30px #ff000022;
+  }
+  .login-box h2 { font-size: 18px; margin-bottom: 6px; }
+  .login-box button {
+    background: #ff2a2a;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-weight: 700;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: white;
+    transition: background .2s, color .2s;
+    flex-shrink: 0;
+  }
+  .login-box button:hover { background: white; color: #ff2a2a; }
 
-/* hover */
-.team-table tr:hover {
-  background-color: #ff6b6b;
-}
-
-.logo-box {
-  background: #606060;
-  padding: 6px;
-  border-radius: 10px;
-  width: 52px;
-  height: 52px;
-
-  border: 1px solid rgba(255,255,255,0.15); /* เพิ่มเส้นบาง */
-}
-
-/* โลโก้ */
-.team-logo {
-  width: 36px;
-  height: 36px;
-  object-fit: contain;
-}
-
-/* hover เพิ่มความรู้สึก interactive */
-.team-table tr:hover .logo-box {
-  box-shadow: 0 0 12px rgba(0,0,0,0.9);
-}
-
-.team-table tbody tr:first-child {
-  background-color: #d10000; /* แดงเข้มกว่า */
-  font-weight: bold;
-}
-
-/* ขยายคอลัมน์ Team */
-.team-table .col-team {
-  min-width: 180px;   /* ปรับได้ตามใจ */
-  text-align: left;   /* อ่านง่ายขึ้น */
-  padding-left: 16px;
-}
-
-/* ขยายคอลัมน์ Region */
-.team-table .col-region {
-  min-width: 160px;
-}
-
-/* MATCH CARD – TEAM LOGOS */
-.match-teams {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 16px 0;
-  gap: 12px;
-}
-
-.team-side {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex: 1;
-}
-
-.team-side-right {
-  flex-direction: row-reverse;
-}
-
-.match-team-logo {
-  width: 72px;
-  height: 72px;
-  object-fit: contain;
-  background: #3a3a3a;
-  border-radius: 12px;
-  padding: 8px;
-  flex-shrink: 0;
-}
-
-.match-logo-placeholder {
-  width: 72px;
-  height: 72px;
-  background: #2a2a2a;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  font-weight: 700;
-  color: #888;
-  flex-shrink: 0;
-}
-
-.vs-text {
-  font-size: 14px;
-  font-weight: 700;
-  color: #555;
-  letter-spacing: 3px;
-  flex-shrink: 0;
-  padding: 0 16px;
-}
-
-.team1, .team2 {
-  font-size: 18px;
-  font-weight: 700;
-}
+  @media (max-width: 900px) {
+    .match-section { padding: 0 16px 60px; grid-template-columns: 1fr; }
+    .match-team-logo { width: 72px; height: 72px; }
+    .team1, .team2 { font-size: 18px; }
+    .login-box { flex-direction: column; gap: 16px; text-align: center; margin: 0 16px 24px; }
+  }

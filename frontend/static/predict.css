@@ -1,0 +1,686 @@
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap');
+
+   /* ── PAGE HEADER ── */
+   .predict-header {
+     background: linear-gradient(135deg, #1a0505 0%, #0d0000 60%, #0a0a0a 100%);
+     border-bottom: 2px solid #c0392b;
+     padding: 36px 48px 28px;
+   }
+   
+   .predict-header-inner {
+     max-width: 1300px;
+     margin: 0 auto;
+     display: flex;
+     align-items: flex-end;
+     justify-content: space-between;
+     gap: 24px;
+     flex-wrap: wrap;
+   }
+   
+   .predict-title {
+     font-family: 'Orbitron', sans-serif;
+     font-size: 48px;
+     font-weight: 900;
+     color: #e53e3e;
+     letter-spacing: 6px;
+     text-transform: uppercase;
+     line-height: 1;
+     margin: 0 0 6px 0;
+   }
+   
+   .predict-sub {
+     font-family: 'Rajdhani', sans-serif;
+     font-size: 12px;
+     font-weight: 600;
+     letter-spacing: 3px;
+     color: rgba(255,255,255,0.35);
+     text-transform: uppercase;
+   }
+   
+   .scoring-pills {
+     display: flex;
+     gap: 3px;
+     flex-wrap: wrap;
+   }
+
+   .scoring-pill {
+     display: flex;
+     align-items: center;
+     gap: 8px;
+     padding: 6px 14px;
+     background: rgba(255,255,255,0.04);
+     border: 1px solid rgba(255,255,255,0.1);
+     border-radius: 2px;
+     font-family: 'Rajdhani', sans-serif;
+     font-size: 13px;
+     font-weight: 600;
+     letter-spacing: 1px;
+     color: rgba(255,255,255,0.5);
+     text-transform: uppercase;
+   }
+   .scoring-pill .pill-label {
+     flex: 1;
+     white-space: nowrap;
+   }
+   .scoring-pill strong {
+     color: #fff;
+     white-space: nowrap;
+     margin-left: auto;
+     padding-left: 4px;
+   }
+   
+   .pill-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+   .pill-dot.red   { background: #e53e3e; }
+   .pill-dot.amber { background: #d97706; }
+   .pill-dot.gold  { background: #d4a017; }
+   
+   /* ── WRAPPER ── */
+   .predict-wrap {
+     max-width: 1300px;
+     margin: 0 auto;
+     padding: 36px 48px 80px;
+   }
+   
+   /* ── BRACKET BLOCK ── */
+   .bracket-block { margin-bottom: 52px; }
+   
+   .bracket-heading {
+     display: flex;
+     align-items: center;
+     gap: 16px;
+     margin-bottom: 24px;
+   }
+   
+   .bracket-tag {
+     font-family: 'Orbitron', sans-serif;
+     font-size: 14px;
+     font-weight: 700;
+     letter-spacing: 3px;
+     color: #e53e3e;
+     border: 1px solid rgba(229,62,62,0.4);
+     padding: 5px 14px;
+     white-space: nowrap;
+     text-transform: uppercase;
+     background: rgba(229,62,62,0.05);
+   }
+   
+   .bracket-line {
+     flex: 1;
+     height: 1px;
+     background: linear-gradient(90deg, rgba(229,62,62,0.3), transparent);
+   }
+   
+   /* ── ROUND BLOCK ── */
+   .round-block { margin-bottom: 32px; }
+   
+   .round-name {
+     font-family: 'Rajdhani', sans-serif;
+     font-size: 15px;
+     font-weight: 700;
+     letter-spacing: 3px;
+     text-transform: uppercase;
+     color: rgba(255,255,255,0.25);
+     margin-bottom: 14px;
+     padding-left: 2px;
+   }
+   
+   /* ── MATCH GRID ── */
+   .match-grid {
+     display: grid;
+     grid-template-columns: repeat(2, 1fr);
+     gap: 14px;
+   }
+   
+   /* ── MATCH CARD ── */
+   .match-card {
+     background: #110a0a;
+     border: 1px solid rgba(255,255,255,0.07);
+     border-left: 3px solid #2a1010;
+     transition: border-color 0.2s, transform 0.15s;
+     position: relative;
+     overflow: hidden;
+   }
+   
+   .match-card:hover {
+     border-color: rgba(229,62,62,0.3);
+     border-left-color: #e53e3e;
+     transform: translateY(-1px);
+   }
+   
+   .match-card.status-completed {
+     border-left-color: rgba(56,161,105,0.5);
+     opacity: 0.88;
+   }
+   
+   .match-card.status-live { border-left-color: #e53e3e; }
+   
+   .match-card.status-live::after {
+     content: '';
+     position: absolute;
+     top: 0; left: 0;
+     width: 3px; height: 100%;
+     background: #e53e3e;
+     animation: pulse-side 1.4s ease-in-out infinite;
+   }
+   
+   @keyframes pulse-side {
+     0%,100% { opacity: 1; }
+     50%      { opacity: 0.2; }
+   }
+   
+   /* ── CARD HEAD ── */
+   .card-head {
+     display: flex;
+     align-items: center;
+     gap: 8px;
+     padding: 9px 14px;
+     background: rgba(0,0,0,0.3);
+     border-bottom: 1px solid rgba(255,255,255,0.05);
+     flex-wrap: wrap;
+   }
+   
+   .card-id {
+     font-family: 'Orbitron', sans-serif;
+     font-size: 13px;
+     letter-spacing: 1px;
+     color: rgba(255,255,255,0.18);
+     text-transform: uppercase;
+     font-weight: 400;
+   }
+   
+   .card-badge {
+     font-family: 'Rajdhani', sans-serif;
+     font-size: 14px;
+     font-weight: 700;
+     letter-spacing: 1.5px;
+     padding: 3px 10px;
+     border-radius: 2px;
+     text-transform: uppercase;
+   }
+   .card-badge.done     { background: rgba(56,161,105,0.15); color: #68d391; border: 1px solid rgba(56,161,105,0.25); }
+   .card-badge.live     { background: rgba(229,62,62,0.15);  color: #fc8181; border: 1px solid rgba(229,62,62,0.3); }
+   .card-badge.upcoming { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.1); }
+   
+   .card-your-pick {
+     margin-left: auto;
+     font-family: 'Rajdhani', sans-serif;
+     font-size: 11px;
+     font-weight: 600;
+     letter-spacing: 0.5px;
+     color: rgba(255,255,255,0.3);
+     text-transform: uppercase;
+   }
+   .card-your-pick strong { color: #d4a017; }
+   
+   /* ── CARD TEAMS ── */
+   .card-teams {
+     display: flex;
+     align-items: center;
+     padding: 16px 14px;
+     gap: 6px;
+   }
+   
+   /* ── TEAM PICK ── */
+   .team-pick {
+     flex: 1;
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     gap: 8px;
+     padding: 12px 8px;
+     cursor: pointer;
+     border: 1.5px solid transparent;
+     border-radius: 2px;
+     transition: all 0.15s;
+     position: relative;
+     text-align: center;
+   }
+   
+   .team-pick:hover:not(.is-locked) {
+     background: rgba(229,62,62,0.06);
+     border-color: rgba(229,62,62,0.2);
+   }
+   .team-pick.is-picked  { background: rgba(229,62,62,0.1); border-color: rgba(229,62,62,0.5); }
+   .team-pick.is-winner  { background: rgba(56,161,105,0.08); border-color: rgba(56,161,105,0.35); }
+   .team-pick.is-locked  { cursor: default; }
+   
+   .team-logo-box {
+     width: 52px; height: 52px;
+     display: flex; align-items: center; justify-content: center;
+     background: rgba(255,255,255,0.04);
+     border-radius: 4px;
+     padding: 4px;
+   }
+   .team-logo-box img {
+     width: 100%; height: 100%;
+     object-fit: contain;
+     filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+   }
+   .team-logo-box span { color: rgba(255,255,255,0.2); font-size: 18px; }
+   
+   .team-tag {
+     font-family: 'Orbitron', sans-serif;
+     font-size: 11px;
+     font-weight: 700;
+     letter-spacing: 2px;
+     text-transform: uppercase;
+     color: #e8e8e8;
+   }
+   
+   .crown-icon { position: absolute; top: 4px; right: 6px; font-size: 13px; }
+   
+   /* ── VS ── */
+   .card-vs { flex-shrink: 0; display: flex; align-items: center; }
+   .card-vs span {
+     font-family: 'Orbitron', sans-serif;
+     font-size: 9px;
+     font-weight: 700;
+     letter-spacing: 3px;
+     color: rgba(255,255,255,0.15);
+   }
+   
+   /* ── CARD FOOTER ── */
+   .card-foot {
+     display: flex;
+     align-items: center;
+     justify-content: space-between;
+     padding: 11px 14px;
+     border-top: 1px solid rgba(255,255,255,0.06);
+     background: rgba(0,0,0,0.2);
+     gap: 12px;
+   }
+   
+   .score-group { display: flex; align-items: center; gap: 10px; }
+   
+   .score-heading {
+     font-family: 'Rajdhani', sans-serif;
+     font-size: 10px;
+     font-weight: 700;
+     letter-spacing: 2px;
+     color: rgba(255,255,255,0.25);
+     text-transform: uppercase;
+   }
+   
+   .score-opts { display: flex; gap: 6px; }
+   
+   .score-opt {
+     padding: 5px 13px;
+     background: rgba(255,255,255,0.04);
+     border: 1px solid rgba(255,255,255,0.1);
+     color: rgba(255,255,255,0.4);
+     font-family: 'Orbitron', sans-serif;
+     font-size: 10px;
+     font-weight: 700;
+     letter-spacing: 1px;
+     cursor: pointer;
+     transition: all 0.15s;
+     border-radius: 2px;
+   }
+   .score-opt:hover  { border-color: rgba(229,62,62,0.35); color: #fff; }
+   .score-opt.active { background: rgba(229,62,62,0.12); border-color: rgba(229,62,62,0.5); color: #fc8181; }
+   
+   /* ── LOCK BUTTON ── */
+   .lock-btn {
+     padding: 7px 20px;
+     background: #c0392b;
+     color: #fff;
+     border: none;
+     font-family: 'Rajdhani', sans-serif;
+     font-size: 13px;
+     font-weight: 700;
+     letter-spacing: 3px;
+     text-transform: uppercase;
+     cursor: pointer;
+     border-radius: 2px;
+     transition: background 0.15s, transform 0.1s;
+     white-space: nowrap;
+   }
+   .lock-btn:hover  { background: #a93226; }
+   .lock-btn:active { transform: scale(0.97); }
+   
+   /* ── CARD RESULT (completed) ── */
+   .card-result {
+     display: flex;
+     align-items: center;
+     gap: 12px;
+     padding: 11px 14px;
+     border-top: 1px solid rgba(255,255,255,0.06);
+     background: rgba(0,0,0,0.2);
+     flex-wrap: wrap;
+   }
+   
+   .result-label {
+     font-family: 'Rajdhani', sans-serif;
+     font-size: 10px;
+     font-weight: 700;
+     letter-spacing: 2px;
+     color: rgba(255,255,255,0.2);
+     text-transform: uppercase;
+   }
+   
+   .result-value {
+     font-family: 'Orbitron', sans-serif;
+     font-size: 11px;
+     font-weight: 700;
+     letter-spacing: 2px;
+     color: #68d391;
+   }
+   
+   .result-correct {
+     margin-left: auto;
+     font-family: 'Rajdhani', sans-serif;
+     font-size: 11px;
+     font-weight: 700;
+     letter-spacing: 1px;
+     color: #68d391;
+     background: rgba(56,161,105,0.12);
+     border: 1px solid rgba(56,161,105,0.25);
+     padding: 2px 8px;
+     border-radius: 2px;
+   }
+   
+   .result-wrong {
+     margin-left: auto;
+     font-family: 'Rajdhani', sans-serif;
+     font-size: 11px;
+     font-weight: 700;
+     letter-spacing: 1px;
+     color: #fc8181;
+     background: rgba(229,62,62,0.1);
+     border: 1px solid rgba(229,62,62,0.2);
+     padding: 2px 8px;
+     border-radius: 2px;
+   }
+   
+   /* ── TOAST ── */
+   .predict-toast {
+     position: fixed;
+     bottom: 28px; right: 28px;
+     padding: 10px 20px;
+     background: #1a0a0a;
+     border: 1px solid rgba(229,62,62,0.3);
+     border-left: 3px solid transparent;
+     color: #e8e8e8;
+     font-family: 'Rajdhani', sans-serif;
+     font-size: 13px;
+     font-weight: 700;
+     letter-spacing: 1px;
+     text-transform: uppercase;
+     border-radius: 2px;
+     transform: translateY(10px);
+     opacity: 0;
+     transition: all 0.25s;
+     z-index: 9999;
+     pointer-events: none;
+   }
+   .predict-toast.show  { opacity: 1; transform: translateY(0); }
+   .predict-toast.ok    { border-left-color: #38a169; }
+   .predict-toast.warn  { border-left-color: #d97706; }
+   .predict-toast.err   { border-left-color: #e53e3e; }
+   
+   /* ── RESPONSIVE ── */
+   @media (max-width: 768px) {
+     .predict-header { padding: 24px 20px 20px; }
+     .predict-title  { font-size: 32px; letter-spacing: 4px; }
+     .predict-wrap   { padding: 24px 16px 60px; }
+     .match-grid     { grid-template-columns: 1fr; }
+     .scoring-pills  { display: none; }
+   }
+   
+   /* ── ADMIN PANEL ── */
+   .admin-panel {
+     border-top: 1px solid rgba(229,62,62,0.2);
+     background: rgba(229,62,62,0.04);
+   }
+   
+   .admin-panel-header {
+     display: flex;
+     align-items: center;
+     justify-content: space-between;
+     padding: 7px 14px;
+   }
+   
+   .admin-panel-label {
+     font-family: 'Orbitron', sans-serif;
+     font-size: 12px;
+     font-weight: 700;
+     letter-spacing: 2px;
+     color: rgba(229,62,62,0.6);
+     text-transform: uppercase;
+   }
+   
+   .admin-edit-btn {
+     font-family: 'Rajdhani', sans-serif;
+     font-size: 10px;
+     font-weight: 700;
+     letter-spacing: 1.5px;
+     text-transform: uppercase;
+     color: rgba(255,180,0,0.7);
+     background: transparent;
+     border: 1px solid rgba(255,180,0,0.25);
+     padding: 3px 10px;
+     border-radius: 2px;
+     cursor: pointer;
+     transition: all 0.15s;
+   }
+   .admin-edit-btn:hover {
+     color: #fbbf24;
+     border-color: rgba(255,180,0,0.5);
+     background: rgba(255,180,0,0.06);
+   }
+   
+   .admin-panel-form { padding: 0 14px 12px; }
+   
+   .admin-form-row {
+     display: flex;
+     align-items: flex-end;
+     gap: 10px;
+     flex-wrap: wrap;
+   }
+   
+   .admin-field { display: flex; flex-direction: column; gap: 4px; }
+   
+   .admin-field label {
+     font-family: 'Rajdhani', sans-serif;
+     font-size: 13px;
+     font-weight: 700;
+     letter-spacing: 2px;
+     color: rgba(255,255,255,0.25);
+     text-transform: uppercase;
+   }
+   
+   .admin-select {
+     padding: 6px 24px 6px 8px;
+     background: rgba(0,0,0,0.4);
+     border: 1px solid rgba(229,62,62,0.25);
+     color: #e8e8e8;
+     font-family: 'Rajdhani', sans-serif;
+     font-size: 15px;
+     font-weight: 600;
+     border-radius: 2px;
+     cursor: pointer;
+     appearance: none;
+     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.3)' stroke-width='2'%3E%3Cpolyline points='6,9 12,15 18,9'/%3E%3C/svg%3E");
+     background-repeat: no-repeat;
+     background-position: right 7px center;
+     transition: border-color 0.15s;
+     min-width: 90px;
+   }
+   .admin-select:focus   { outline: none; border-color: rgba(229,62,62,0.5); }
+   .admin-select option  { background: #1a0505; }
+   .admin-select:disabled { opacity: 0.3; cursor: not-allowed; border-color: rgba(255,255,255,0.05); }
+   
+   .admin-submit-btn {
+     padding: 7px 16px;
+     background: #c0392b;
+     color: #fff;
+     border: none;
+     border-radius: 2px;
+     font-family: 'Rajdhani', sans-serif;
+     font-size: 15px;
+     font-weight: 700;
+     letter-spacing: 2px;
+     text-transform: uppercase;
+     cursor: pointer;
+     transition: background 0.15s;
+     align-self: flex-end;
+   }
+   .admin-submit-btn:hover    { background: #a93226; }
+   .admin-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+   
+   .admin-cancel-btn {
+     padding: 7px 12px;
+     background: transparent;
+     border: 1px solid rgba(255,255,255,0.1);
+     color: rgba(255,255,255,0.3);
+     border-radius: 2px;
+     font-family: 'Rajdhani', sans-serif;
+     font-size: 12px;
+     font-weight: 700;
+     letter-spacing: 1px;
+     text-transform: uppercase;
+     cursor: pointer;
+     transition: all 0.15s;
+     align-self: flex-end;
+   }
+   .admin-cancel-btn:hover { color: rgba(255,255,255,0.6); border-color: rgba(255,255,255,0.2); }
+   
+   /* ── TBD PLACEHOLDER ── */
+   .card-badge.tbd-badge {
+     background: rgba(255,180,0,0.1);
+     color: #fbbf24;
+     border: 1px solid rgba(255,180,0,0.25);
+   }
+   
+   .tbd-placeholder {
+     padding: 20px 16px 16px;
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     gap: 10px;
+   }
+   
+   .tbd-slots {
+     display: flex;
+     align-items: center;
+     gap: 20px;
+     width: 100%;
+     justify-content: center;
+   }
+   
+   .tbd-slot {
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     gap: 8px;
+     flex: 1;
+     max-width: 120px;
+   }
+   
+   .tbd-slot img { width: 44px; height: 44px; object-fit: contain; opacity: 0.6; }
+   
+   .tbd-icon {
+     width: 44px; height: 44px;
+     background: rgba(255,255,255,0.05);
+     border: 1px dashed rgba(255,255,255,0.12);
+     border-radius: 4px;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     font-size: 18px;
+     color: rgba(255,255,255,0.15);
+   }
+   
+   .tbd-slot span {
+     font-family: 'Orbitron', sans-serif;
+     font-size: 10px;
+     font-weight: 700;
+     letter-spacing: 1px;
+     text-transform: uppercase;
+     color: rgba(255,255,255,0.3);
+   }
+   
+   .tbd-vs {
+     font-family: 'Orbitron', sans-serif;
+     font-size: 9px;
+     font-weight: 700;
+     letter-spacing: 3px;
+     color: rgba(255,255,255,0.12);
+     flex-shrink: 0;
+   }
+   
+   .tbd-msg {
+     font-family: 'Rajdhani', sans-serif;
+     font-size: 11px;
+     font-weight: 500;
+     color: rgba(255,255,255,0.2);
+     text-align: center;
+     letter-spacing: 0.3px;
+     font-style: italic;
+   }
+   
+   /* ── ADMIN SECTION LABELS ── */
+   .admin-section-label {
+     font-family: 'Rajdhani', sans-serif;
+     font-size: 10px;
+     font-weight: 700;
+     letter-spacing: 2px;
+     text-transform: uppercase;
+     color: rgba(255,255,255,0.2);
+     padding: 6px 0 4px 0;
+   }
+   
+   .admin-note {
+     color: rgba(255,160,0,0.5);
+     font-weight: 500;
+     letter-spacing: 0.5px;
+     text-transform: none;
+   }
+   
+   .admin-divider { height: 1px; background: rgba(255,255,255,0.06); margin: 8px 0; }
+   
+   .admin-assign-btn {
+     padding: 7px 14px;
+     background: rgba(255,160,0,0.15);
+     border: 1px solid rgba(255,160,0,0.4);
+     color: #fbbf24;
+     border-radius: 2px;
+     font-family: 'Rajdhani', sans-serif;
+     font-size: 12px;
+     font-weight: 700;
+     letter-spacing: 2px;
+     text-transform: uppercase;
+     cursor: pointer;
+     transition: all 0.15s;
+     align-self: flex-end;
+     white-space: nowrap;
+   }
+   .admin-assign-btn:hover    { background: rgba(255,160,0,0.25); border-color: rgba(255,160,0,0.6); }
+   .admin-assign-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+   
+   /* ── REAL-TIME LIVE INDICATOR ── */
+   .live-dot {
+     display: inline-flex;
+     align-items: center;
+     gap: 4px;
+     font-family: 'Orbitron', sans-serif;
+     font-size: 8px;
+     font-weight: 700;
+     letter-spacing: 2px;
+     color: rgba(56,161,105,0.7);
+     margin-left: 12px;
+     vertical-align: middle;
+   }
+   .live-dot.pulse { color: #68d391; }
+   
+   /* ── CARD FLASH on update ── */
+   @keyframes card-update-flash {
+     0%   { box-shadow: 0 0 0 2px rgba(56,161,105,0); }
+     30%  { box-shadow: 0 0 0 2px rgba(56,161,105,0.6); }
+     100% { box-shadow: 0 0 0 2px rgba(56,161,105,0); }
+   }
+   
+   .match-card.just-updated {
+     animation: card-update-flash 1.8s ease-out forwards;
+     border-color: rgba(56,161,105,0.3) !important;
+   }

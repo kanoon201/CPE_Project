@@ -3,426 +3,124 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Valorant Predict</title>
+  <title>PICK'EM – Valorant Esports</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}">
 </head>
+<body class="landing-body">
 
-<script>
-  const path = window.location.pathname;
-  document.querySelectorAll('.nav-links a').forEach(a => {
-    if (a.getAttribute('href') === path) {
-      a.classList.add('active');
-    }
-  });
-</script>
-
-<body>
-
-<div class="navbar">
-  <div class="logo">PICK'EM</div>
-  <div class="nav-links">
-    <a href="/predict">Predict</a>
-    <a href="/matches">Matches</a>
-    <a href="/tournament">Tournament</a>
-    <a href="/leaderboard">Leaderboard</a>
-    <a href="/teams">Teams</a>
-    
-    {% if logged_in %}
-        {% if is_admin %}
-            <span class="user-name" style="color:#00ff99; font-weight:bold;">⚙ {{ session['username'] }}</span>
-        {% else %}
-            <span class="user-name">{{ session['username'] }}</span>
-        {% endif %}
-        <a href="/logout" class="logout-link">Log out</a>
-    {% else %}
-        <span>Profile</span>
-    {% endif %}
+<!-- ── NAVBAR ── -->
+<nav class="landing-nav">
+  <div class="landing-logo">
+    <svg width="22" height="22" viewBox="0 0 60 50" fill="none">
+      <polygon points="0,50 18,0 24,0 6,50" fill="#ff2a2a"/>
+      <polygon points="16,50 34,0 60,0 42,50" fill="#ffffff"/>
+    </svg>
+    PICK'EM
   </div>
-</div>
+<div class="landing-nav-links">
+  <a href="{% if logged_in %}/tournaments{% else %}/login{% endif %}">Tournament</a>
+  <a href="{% if logged_in %}/predict{% else %}/login{% endif %}">Predict</a>
+  <a href="{% if logged_in %}/matches{% else %}/login{% endif %}">Bracket</a>
+  <a href="{% if logged_in %}/teams{% else %}/login{% endif %}">Teams</a>
 
-<div class="header" style="display:flex; justify-content:space-between; align-items:flex-start;">
-  <div>
-    <h1>Predict</h1>
-    <div class="tabs">
-      <span class="active">Predictions</span>
-      <span>Leagues</span>
-      <span>Prizes</span>
-      <span>Rules</span>
-    </div>
-  </div>
-
-  {# add admin result form here #}
-  {% if is_admin %}
-  <div style="border:2px solid #00ff99; border-radius:16px; padding:16px; min-width:400px;">
-    <h3 style="color:#00ff99; margin-bottom:10px;">ADMIN – Update Match</h3>
-    <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
-      <select id="admin_match_id" style="flex:1;">
-        <option value="">-- Select Match --</option>
-        {% for m in matches %}
-          <option value="{{ m.match_id }}">{{ m.match_id }} – {{ m.round }}</option>
-        {% endfor %}
-      </select>
-      <select id="admin_team1" style="flex:1;">
-        <option value="">-- Team 1 --</option>
-        {% for short, t in team_logos.items() %}
-          <option value="{{ short }}">{{ t.Teamname }}</option>
-        {% endfor %}
-      </select>
-      <select id="admin_team2" style="flex:1;">
-        <option value="">-- Team 2 --</option>
-        {% for short, t in team_logos.items() %}
-          <option value="{{ short }}">{{ t.Teamname }}</option>
-        {% endfor %}
-      </select>
-      <select id="admin_status" style="flex:1;">
-        <option value="pending">pending</option>
-        <option value="upcoming">upcoming</option>
-        <option value="completed">completed</option>
-      </select>
-      <input id="admin_score" placeholder="score (2-1)" style="flex:1;">
-      <select id="admin_winner" style="flex:1;">
-        <option value="">-- Winner --</option>
-        {% for short, t in team_logos.items() %}
-          <option value="{{ short }}">{{ t.Teamname }}</option>
-        {% endfor %}
-      </select>
-      <button class="submit-btn" style="margin:0;" onclick="adminUpdateMatch()">Update Match</button>
-    </div>
-    <div id="admin_result" style="margin-top:8px; color:#00ff99;"></div>
-  </div>
-  {% endif %}
-
-</div>
-
-
-{% if not logged_in %}
-<div class="login-box">
-  <div>
-    <h2>Unlock the full experience</h2>
-    <p>Create an account to compete and climb the leaderboard.</p>
-  </div>
-  <button onclick="window.location.href='/login'">Log in to play</button>
-</div>
-{% endif %}
-
-
-<div class="match-section">
-  {# 👇 เพิ่มบรรทัดนี้ตรงนี้ #}
-  {% set current_bracket = "" %}
-  {% set ns = namespace(bracket="") %}
-
-  {% for m in matches %}
-
-    {# 👇 เพิ่ม block นี้บนสุดของ loop #}
-    {% if m.bracket != ns.bracket %}
-      {% if m.bracket != 'grand' %}
-        <h2 style="margin-top:40px;">
-          {{ m.bracket|upper }} BRACKET
-        </h2>
-      {% endif %}
-      {% set ns.bracket = m.bracket %}
-    {% endif %}
-    {% if m.match_id == "LF" %}
-      <h2 style="margin-top:30px; color:#ff5555;">
-        LOWER FINAL
-      </h2>
-    {% endif %}
-    {% if m.match_id == "GF" %}
-        <h2
-        style="
-          margin-top:40px;
-          color: gold;
-          text-shadow: 0 0 10px rgba(255,215,0,0.8);
-        "
-      >
-        GRAND FINAL
-      </h2>
-    {% endif %}
-
-    {# 👇 ของเดิมคุณ (match-card) อยู่ตรงนี้ #}
-    <div class="match-card">
-
-      <h4>
-        {% if m.match_id == "LF" %}
-          Lower Final (LF)
-        {% else %}
-          {{ m.round }} ({{ m.match_id }})
-        {% endif %}
-      </h4>
-
-      {% if m.team1 and m.team2 %}
-        <div class="match-teams">
-          <div class="team-side">
-            {% if m.team1 in team_logos %}
-              <img src="{{ team_logos[m.team1].Logo }}" class="match-team-logo" alt="{{ m.team1 }}">
-            {% else %}
-              <div class="match-logo-placeholder">{{ m.team1[:3] }}</div>
-            {% endif %}
-            <span class="team1">{{ team_logos[m.team1].Teamname if m.team1 in team_logos else m.team1 }}</span>
-          </div>
-          <span class="vs-text">VS</span>
-          <div class="team-side team-side-right">
-            <span class="team2">{{ team_logos[m.team2].Teamname if m.team2 in team_logos else m.team2 }}</span>
-            {% if m.team2 in team_logos %}
-              <img src="{{ team_logos[m.team2].Logo }}" class="match-team-logo" alt="{{ m.team2 }}">
-            {% else %}
-              <div class="match-logo-placeholder">{{ m.team2[:3] }}</div>
-            {% endif %}
-          </div>
-        </div>
-      {% else %}
-        <p style="color:gray;">Waiting for teams</p>
-      {% endif %}
-
-      {% if m.status == "pending" %}
-        <p style="color:gray;">⏳ Match not open yet</p>
-
-      {% elif m.status == "upcoming" %}
-        {% set p = user_predictions.get(m.match_id) %}
-        <div class="score-box">
-          {% if p %}
-            {% set prev = p.Predict_Score.split('-') %}
-            <input type="number" class="score-input" min="0" value="{{ prev[0] }}">
-            <input type="number" class="score-input" min="0" value="{{ prev[1] }}">
-          {% else %}
-            <input type="number" class="score-input" min="0">
-            <input type="number" class="score-input" min="0">
-          {% endif %}
-        </div>
-        {% if p %}
-          <p class="prev-prediction" style="text-align:center; color:gray; font-size:0.8em; margin-top:8px;">
-            Previous: {{ p.Predict_Winner }} {{ p.Predict_Score }}
-          </p>
-        {% endif %}
-        <button class="submit-btn"
-          onclick="submitPrediction(this,'{{ m.match_id }}')">
-          Submit Prediction
-        </button>
-        <div class="result"></div>
-
-      {% elif m.status == "completed" %}
-        <p style="color:#00ff99;">✅ Match Completed</p>
-        {% set fscores = m.score.split('-') %}
-        <p style="text-align:center;">
-          Final Score: <b>
-            {{ m.team1 }} {{ fscores[0] }} 
-            - {{ fscores[1] }} {{ m.team2 }}
-          </b>
-        </p>
-        <p>Winner: 
-          {% if m.winner in team_logos %}
-            {{ team_logos[m.winner].Teamname }}
-          {% else %}
-            {{ m.winner }}
-          {% endif %}
-        </p>
-        <hr>
-        <p style="text-align:center; font-weight:bold; margin-bottom:8px;">Your Prediction:</p>
-
-        {% set p = user_predictions.get(m.match_id) %}
-
-        {% if p %}
-          {% set scores = p.Predict_Score.split('-') %}
-          <p style="text-align:center;">
-            Winner: {{ p.Predict_Winner }}
-              {% set t1_short = m.team1 %}
-              {% set t1_full  = team_logos[m.team1].Teamname if m.team1 in team_logos else m.team1 %}
-              {% set t2_short = m.team2 %}
-              {% set t2_full  = team_logos[m.team2].Teamname if m.team2 in team_logos else m.team2 %}
-              {% set w = m.winner %}
-              {% set predicted = p.Predict_Winner %}
-              {% if (w == t1_short or w == t1_full) and (predicted == t1_short or predicted == t1_full) %}
-                <span style="color:#00ff99;">✔</span>
-              {% elif (w == t2_short or w == t2_full) and (predicted == t2_short or predicted == t2_full) %}
-                <span style="color:#00ff99;">✔</span>
-              {% else %}
-                <span style="color:#ff5555;">✖</span>
-              {% endif %}
-          </p>
-          <p style="text-align:center;">
-            {{ m.team1 }} {{ scores[0] }} - {{ scores[1] }} {{ m.team2 }}
-          </p>
-        {% else %}
-          <p style="color:gray;">
-            You did not make a prediction
-          </p>
-        {% endif %}
-
-      {% endif %}
-
-
-    </div>
-  {% endfor %}
-
-{# 
-  <div class="match-card">
-    <div class="match-top">
-      <div class="teams">
-        <span class="team1">Paper Rex</span>
-        <div class="score-box">
-          <input type="number" id="s3" class="score-input" min="0">
-          <input type="number" id="s4" class="score-input" min="0">
-        </div>
-        <span class="team2">LOUD</span>
-      </div>
-    </div>
   {% if logged_in %}
-    <button class="submit-btn" 
-      onclick="submitPrediction(this, 'match2')">
-      Submit Prediction
-    </button>
+      {% if is_admin %}
+          <a href="/user/{{ session['username'] }}" class="nav-user admin-user" style="text-decoration:none;">⚙ {{ session['username'] }}</a>
+      {% else %}
+          <a href="/user/{{ session['username'] }}" class="nav-user" style="text-decoration:none;">{{ session['username'] }}</a>
+      {% endif %}
+      <a href="/logout" class="nav-logout">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16,17 21,12 16,7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+      </a>
   {% else %}
-    <p class="login-warning">Please login to play</p>
+      <a href="/login" class="nav-login-btn">LOG IN</a>
   {% endif %}
-    <div class="result" id="result2"></div>
-  </div>
-#}
+</div>
+</nav>
 
-
+<!-- ── HERO BACKGROUND ── -->
+<div class="hero-bg">
+  <!-- Diagonal slash decorations matching reference -->
+  <div class="slash slash-1"></div>
+  <div class="slash slash-2"></div>
+  <div class="slash slash-3"></div>
+  <div class="slash slash-4"></div>
+  <div class="slash slash-5"></div>
+  <div class="slash slash-6"></div>
+  <!-- Red glow overlays -->
+  <div class="glow-left"></div>
+  <div class="glow-right"></div>
+  <div class="glow-bottom"></div>
+  <!-- Noise overlay -->
+  <div class="noise-overlay"></div>
 </div>
 
+<!-- ── HERO CONTENT ── -->
+<main class="hero-content">
 
+  <!-- Valorant V logo -->
+  <div class="val-logo-wrap">
+    <svg class="val-v" viewBox="0 0 120 100" fill="none">
+      <polygon points="0,0 20,0 60,90 100,0 120,0 60,110" fill="#ff2a2a" opacity="0.9"/>
+      <polygon points="10,0 30,0 60,60 90,0 110,0 60,80" fill="#c0392b"/>
+    </svg>
+    <div class="val-label">VALORANT ESPORTS</div>
+  </div>
 
+  <!-- Main title -->
+  <h1 class="hero-title">
+    <span class="hero-title-main">PICK'EM</span>
+  </h1>
 
-<script>
-function submitPrediction(button, matchId) {
-  // หา match-card ที่กด
-  const card = button.closest(".match-card");
-  // อ่าน score เฉพาะในการ์ดนี้
-  const inputs = card.querySelectorAll(".score-input");
-  const s1 = parseInt(inputs[0].value, 10);
-  const s2 = parseInt(inputs[1].value, 10);
+  <p class="hero-sub">Predict match outcomes. Climb the ranks.<br>Prove you know Valorant esports.</p>
 
-  // เช็คกรอกครบ
-  if (isNaN(s1) || isNaN(s2)) {
-    card.querySelector(".result").innerText =
-      "Please enter both scores.";
-    return;
-  }
+  <!-- Scroll hint -->
+  <div class="scroll-hint">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="6,9 12,15 18,9"/>
+    </svg>
+  </div>
 
-  // เช็คติดลบ
-  if (s1 < 0 || s2 < 0) {
-    card.querySelector(".result").innerText="Scores cannot be negative.";
-    return;
-  }
-  // ✅ เช็ค BO3
-  const maxScore = Math.max(s1, s2);
-  const minScore = Math.min(s1, s2);
-  if (!(maxScore === 2 && minScore <= 1)) {
-    card.querySelector(".result").innerText =
-    "Please enter a valid BO3 score (2-0, 2-1, 1-2, 0-2)";
-    return;
-  }
+  <!-- CTA -->
+  <a href="{% if logged_in %}/tournaments{% else %}/login{% endif %}" class="hero-cta">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+    </svg>
+    START PICKING
+  </a>
 
-  // อ่านชื่อทีม
-  const team1 = card.querySelector(".team1").innerText;
-  const team2 = card.querySelector(".team2").innerText;
+  <!-- Background giant text -->
+  <div class="bg-text-wrap">
+    <span class="bg-text">VALORANT</span>
+    <span class="bg-text-2">ESPORTS</span>
+    <span class="bg-text-3">TOURNAMENT HERO</span>
+  </div>
 
-  const winner =
-    parseInt(s1) > parseInt(s2) ? team1 : team2;
+</main>
 
-  fetch("/submit_prediction", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      match_id: matchId,
-      predict_winner: winner,
-      predict_score: s1 + "-" + s2
-    })
-  })
-  .then(res => res.json())
-  .then(data => {
-      if (data.status === "success") {
-        card.querySelector(".result").innerText =
-          "Prediction saved / updated!";
-        
-        // อัปเดต Previous ทันที
-        const prevText = card.querySelector(".prev-prediction");
-        if (prevText) {
-          prevText.innerText = `Previous: ${winner} ${s1}-${s2}`;
-        }
-      }
-    });
-}
-
-function submitPrediction2(button, matchId) {
-  // หา match-card ที่กด
-  const card = button.closest(".match-card");
-  // อ่าน score เฉพาะในการ์ดนี้
-  const inputs = card.querySelectorAll(".score-input");
-  const s1 = inputs[0].value;
-  const s2 = inputs[1].value;
-
-  // เช็คกรอกครบ
-  if (s1 === "" || s2 === "") {
-    card.querySelector(".result").innerText =
-      "Please enter both scores.";
-    return;
-  }
-
-  // เช็คติดลบ
-  if (s1 < 0 || s2 < 0) {
-    document.getElementById('result').innerText="Scores cannot be negative.";
-    return;
-  }
-  // ✅ เช็ค BO3
-  const maxScore = Math.max(s1, s2);
-  const minScore = Math.min(s1, s2);
-  if (!(maxScore === 5 && minScore <= 1)) {
-    document.getElementById('result2').innerText="Please enter a valid BO5 score (5-0, 5-1, 4-5, 1-5)";
-    return;
-  }
-  
-  // อ่านชื่อทีม
-  const team1 = card.querySelector(".team1").innerText;
-  const team2 = card.querySelector(".team2").innerText;
-
-  const winner =
-    parseInt(s1) > parseInt(s2) ? team1 : team2;
-
-  fetch("/submit_prediction", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      match_id: matchId,
-      predict_winner: winner,
-      predict_score: s1 + "-" + s2
-    })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.status === "success") {
-      card.querySelector(".result").innerText =
-        "Prediction saved / updated!";
-    }
-  });
-}
-
-function adminUpdateMatch() {
-  fetch("/admin/update_match", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      match_id: admin_match_id.value,
-      team1: admin_team1.value || null,
-      team2: admin_team2.value || null,
-      status: admin_status.value,
-      score: admin_score.value || null,
-      winner: admin_winner.value || null
-    })
-  })
-  .then(res => res.json())
-  .then(data => {
-    admin_result.innerText = data.message;
-    location.reload();
-  });
-}
-
-
-</script>
-
-
+<!-- ── STATS BAR ── -->
+<div class="stats-bar">
+  <div class="stat-item">
+    <span class="stat-num">8</span>
+    <span class="stat-label">TEAMS</span>
+  </div>
+  <div class="stat-divider"></div>
+  <div class="stat-item">
+    <span class="stat-num">VCT</span>
+    <span class="stat-label">2026</span>
+  </div>
+  <div class="stat-divider"></div>
+  <div class="stat-item">
+    <span class="stat-num">LIVE</span>
+    <span class="stat-label">PREDICTIONS</span>
+  </div>
+</div>
 
 </body>
 </html>
-

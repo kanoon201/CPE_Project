@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Predict – PICK'EM</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='predict.css') }}">
+
+<style>
+.tournament-selector {
+  display: flex; align-items: center; gap: 8px;
+  margin-right: 4px;
+}
+.t-sel-label {
+  font-size: 0.58rem; letter-spacing: 0.18em; color: #444; font-weight: 700;
+}
+.t-sel-dropdown { position: relative; }
+.t-sel-btn {
+  background: #1a0000; border: 1px solid #330000; color: rgba(255,255,255,0.8);
+  font-family: 'Inter', sans-serif; font-size: 0.78rem; font-weight: 600;
+  padding: 5px 12px; cursor: pointer; display: flex; align-items: center; gap: 6px;
+  white-space: nowrap; transition: border-color 0.2s;
+}
+.t-sel-btn:hover { border-color: #ff2a2a; }
+.t-sel-menu {
+  display: none; position: absolute; top: 100%; right: 0;
+  background: #0f0000; border: 1px solid #330000;
+  min-width: 180px; z-index: 200; margin-top: 4px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+}
+.t-sel-dropdown.open .t-sel-menu { display: block; }
+.t-sel-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 14px; font-size: 0.78rem; color: rgba(255,255,255,0.7);
+  text-decoration: none; transition: background 0.15s;
+  border-bottom: 1px solid #1a0000;
+}
+.t-sel-item:hover  { background: #1a0000; color: white; }
+.t-sel-item.active { color: #ff2a2a; font-weight: 700; }
+.t-dot { width: 6px; height: 6px; border-radius: 50%; background: #333; flex-shrink: 0; }
+.t-dot.green { background: #00cc66; box-shadow: 0 0 6px #00cc66; }
+</style>
+
+</head>
+<body>
+
+<!-- NAVBAR (matches existing styles.css navbar) -->
+<nav class="navbar">
+  <div class="logo">PICK'EM</div>
+  <div class="nav-links">
+    <a href="/tournaments">Tournament</a>
+    <a href="/predict" class="active">Predict</a>
+    <a href="/matches">Bracket</a>
+    <a href="/leaderboard">Leaderboard</a>
+    <a href="/teams">Teams</a>
+    {% if logged_in %}
+      {% if is_admin %}
+      <a href="/admin/tournaments" style="color:#00ff99;font-weight:bold;font-size:0.75rem;">⚙ MANAGE</a>
+        <a href="/user/{{ session['username'] }}" class="nav-admin" style="text-decoration:none;color:#00ff99;font-weight:bold;">⚙ {{ session['username'] }}</a>
+      {% else %}
+        <a href="/user/{{ session['username'] }}" style="text-decoration:none;color:white;">{{ session['username'] }}</a>
+      {% endif %}
+      <span onclick="location.href='/logout'">Log out</span>
+    {% else %}
+      <span onclick="location.href='/login'">Log in</span>
+    {% endif %}
+  </div>
+</nav>
+
+<!-- PAGE HEADER -->
+<div class="predict-header">
+  <div class="predict-header-inner">
+    <div>
+      <h1 class="predict-title">PREDICT</h1>
+      <p class="predict-sub">{{ tournament.name | upper if tournament else "MATCH PREDICTIONS" }} <span class="live-dot" id="live-indicator" title="Live updates active">● LIVE</span></p>
+    </div>
+    <div class="scoring-pills">
+      <div class="scoring-pill">
+        <span class="pill-dot red"></span>
+        <span class="pill-label">Correct Team + Score</span>
+        <strong>+10 PTS</strong>
+      </div>
+      <div class="scoring-pill">
+        <span class="pill-dot amber"></span>
+        <span class="pill-label">Correct Team Only</span>
+        <strong>+5 PTS</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="predict-wrap">
+
+  {% set brackets = [('upper','UPPER BRACKET'),('lower','LOWER BRACKET'),('grand','GRAND FINAL')] %}
+
+  {% for bracket_key, bracket_label in brackets %}
+
+    {# collect matches for this bracket #}
+    {% set bm = [] %}
+    {% for m in matches %}
+      {% if m.bracket == bracket_key %}
+        {% set _ = bm.append(m) %}
+      {% endif %}
+    {% endfor %}
+
+    {% if bm %}
+    <div class="bracket-block">
+      <div class="bracket-heading">
+        <span class="bracket-tag">{{ bracket_label }}</span>
+        <div class="bracket-line"></div>
+      </div>
+
+      {# collect unique round names in order #}
+      {% set rounds_seen = [] %}
+      {% for m in bm %}
+        {% if m.round not in rounds_seen %}
+          {% set _ = rounds_seen.append(m.round) %}
+        {% endif %}
+      {% endfor %}
+
+      {% for round_name in rounds_seen %}
+
+        {# collect matches for this round #}
+        {% set rm = [] %}
+        {% for m in bm %}
+          {% if m.round == round_name %}
+            {% set _ = rm.append(m) %}
+          {% endif %}
+        {% endfor %}
+
+        <div class="round-block">
+          <p class="round-name">★ {{ round_name | upper }}</p>
+          <div class="match-grid">
+            {% for match in rm %}
+              {% set mid   = match.match_id %}
+              {% set t1    = match.team1 or '' %}
+              {% set t2    = match.team2 or '' %}
+              {% set status = match.status or 'upcoming' %}
+              {% set pred  = user_predictions.get(mid, {}) %}
+              {% set pw    = pred.get('Predict_Winner','') %}
+              {% set ps    = pred.get('Predict_Score','') %}
+              {% set logo1 = team_logos.get(t1,{}).get('Logo','') if t1 else '' %}
+              {% set logo2 = team_logos.get(t2,{}).get('Logo','') if t2 else '' %}
+              {% set aw    = match.winner or '' %}
+              {% set as_   = match.score  or '' %}
+              {% set both_known = (t1 != '' and t2 != '') %}
+
+              <div class="match-card status-{{ status }}" data-match-id="{{ mid }}" data-status="{{ status }}">
+
+                <!-- Card header -->
+                <div class="card-head">
+                  <span class="card-id">{{ mid }}</span>
+                  {% if status == 'completed' %}
+                    <span class="card-badge done">✓ DONE</span>
+                  {% elif status == 'live' %}
+                    <span class="card-badge live">● LIVE</span>
+                  {% elif not both_known %}
+                    <span class="card-badge tbd-badge">AWAITING</span>
+                  {% else %}
+                    <span class="card-badge upcoming">UPCOMING</span>
+                  {% endif %}
+                  {% if pw %}
+                    <span class="card-your-pick">YOUR PICK: <strong>{{ pw }}{% if ps %} {{ ps }}{% endif %}</strong></span>
+                  {% endif %}
+                </div>
+
+                <!-- Teams -->
+                <div class="card-teams">
+
+                  {% if both_known %}
+                  <!-- Team 1 -->
+                  <div class="team-pick
+                    {% if pw == t1 %}is-picked{% endif %}
+                    {% if status == 'completed' and aw == t1 %}is-winner{% endif %}
+                    {% if status == 'completed' %}is-locked{% endif %}"
+                    onclick="selectTeam('{{ mid }}','{{ t1 }}',this)">
+                    <div class="team-logo-box">
+                      {% if logo1 %}<img src="{{ logo1 }}" alt="{{ t1 }}">{% else %}<span>?</span>{% endif %}
+                    </div>
+                    <span class="team-tag">{{ t1 }}</span>
+                    {% if status == 'completed' and aw == t1 %}<span class="crown-icon">👑</span>{% endif %}
+                  </div>
+
+                  <div class="card-vs"><span>VS</span></div>
+
+                  <!-- Team 2 -->
+                  <div class="team-pick
+                    {% if pw == t2 %}is-picked{% endif %}
+                    {% if status == 'completed' and aw == t2 %}is-winner{% endif %}
+                    {% if status == 'completed' %}is-locked{% endif %}"
+                    onclick="selectTeam('{{ mid }}','{{ t2 }}',this)">
+                    <div class="team-logo-box">
+                      {% if logo2 %}<img src="{{ logo2 }}" alt="{{ t2 }}">{% else %}<span>?</span>{% endif %}
+                    </div>
+                    <span class="team-tag">{{ t2 }}</span>
+                    {% if status == 'completed' and aw == t2 %}<span class="crown-icon">👑</span>{% endif %}
+                  </div>
+
+                  {% else %}
+                  <!-- TBD — teams not yet decided -->
+                  <div class="tbd-placeholder">
+                    <div class="tbd-slots">
+                      <div class="tbd-slot">
+                        {% if t1 and logo1 %}<img src="{{ logo1 }}" alt="{{ t1 }}">{% else %}<div class="tbd-icon">?</div>{% endif %}
+                        <span>{{ t1 if t1 else 'TBD' }}</span>
+                      </div>
+                      <div class="tbd-vs">VS</div>
+                      <div class="tbd-slot">
+                        {% if t2 and logo2 %}<img src="{{ logo2 }}" alt="{{ t2 }}">{% else %}<div class="tbd-icon">?</div>{% endif %}
+                        <span>{{ t2 if t2 else 'TBD' }}</span>
+                      </div>
+                    </div>
+                    <p class="tbd-msg">Teams will be confirmed after previous round results</p>
+                  </div>
+                  {% endif %}
+
+                </div>
+
+                <!-- Footer: score + lock (only if teams are known and not completed) -->
+                {% if status != 'completed' and both_known %}
+                <div class="card-foot">
+                  <div class="score-group">
+                    <span class="score-heading">SCORE</span>
+                    <div class="score-opts">
+                      {% for s in ['2-0','2-1'] %}
+                        <button class="score-opt {% if ps == s %}active{% endif %}"
+                                data-score="{{ s }}"
+                                onclick="selectScore('{{ mid }}','{{ s }}',this)">{{ s }}</button>
+                      {% endfor %}
+                    </div>
+                  </div>
+                  <button class="lock-btn" onclick="submitPick('{{ mid }}')">
+                    {{ 'UPDATE' if pw else 'LOCK IN' }}
+                  </button>
+                </div>
+                {% elif status == 'completed' %}
+                <!-- Completed result -->
+                <div class="card-result">
+                  <span class="result-label">RESULT</span>
+                  <span class="result-value">{{ aw }} · {{ as_ }}</span>
+                  {% if pw %}
+                    {% if pw == aw %}
+                      <span class="result-correct">✓ CORRECT{% if ps == as_ %} +SCORE{% endif %}</span>
+                    {% else %}
+                      <span class="result-wrong">✗ WRONG</span>
+                    {% endif %}
+                  {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- ADMIN PANEL -->
+                {% if is_admin %}
+                <div class="admin-panel" id="admin-{{ mid }}">
+                  <div class="admin-panel-header">
+                    <span class="admin-panel-label">⚙ ADMIN</span>
+                    {% if status == 'completed' %}
+                      <button class="admin-edit-btn" onclick="toggleAdminEdit('{{ mid }}')">EDIT RESULT</button>
+                    {% endif %}
+                  </div>
+                  <div class="admin-panel-form" id="admin-form-{{ mid }}"
+                       style="{% if status == 'completed' %}display:none{% endif %}">
+
+                    {# ── STEP 1: Assign teams (only when TBD) ── #}
+                    {% if not both_known %}
+                    <div class="admin-section-label">ASSIGN TEAMS</div>
+                    <div class="admin-form-row" id="assign-row-{{ mid }}">
+                      <div class="admin-field">
+                        <label>TEAM 1</label>
+                        <select id="admin-t1-{{ mid }}" class="admin-select">
+                          <option value="">— select —</option>
+                          {% if t1 %}<option value="{{ t1 }}" selected>{{ t1 }}</option>{% endif %}
+                          {% for shortname, info in team_logos.items() %}
+                            {% if shortname != t1 %}
+                              <option value="{{ shortname }}">{{ shortname }} – {{ info.Teamname }}</option>
+                            {% endif %}
+                          {% endfor %}
+                        </select>
+                      </div>
+                      <div class="admin-field">
+                        <label>TEAM 2</label>
+                        <select id="admin-t2-{{ mid }}" class="admin-select">
+                          <option value="">— select —</option>
+                          {% if t2 %}<option value="{{ t2 }}" selected>{{ t2 }}</option>{% endif %}
+                          {% for shortname, info in team_logos.items() %}
+                            {% if shortname != t2 %}
+                              <option value="{{ shortname }}">{{ shortname }} – {{ info.Teamname }}</option>
+                            {% endif %}
+                          {% endfor %}
+                        </select>
+                      </div>
+                      <button class="admin-assign-btn" onclick="adminAssignTeams('{{ mid }}')">ASSIGN</button>
+                    </div>
+                    <div class="admin-divider"></div>
+                    <div class="admin-section-label">SUBMIT RESULT <span class="admin-note">(assign teams first)</span></div>
+                    {% else %}
+                    <div class="admin-section-label">SUBMIT RESULT</div>
+                    {% endif %}
+
+                    {# ── STEP 2: Submit result ── #}
+                    <div class="admin-form-row">
+                      <div class="admin-field">
+                        <label>WINNER</label>
+                        <select id="admin-winner-{{ mid }}" class="admin-select"
+                                {% if not both_known %}disabled{% endif %}>
+                          <option value="">— select —</option>
+                          {% if both_known %}
+                            <option value="{{ t1 }}" {% if aw == t1 %}selected{% endif %}>{{ t1 }}</option>
+                            <option value="{{ t2 }}" {% if aw == t2 %}selected{% endif %}>{{ t2 }}</option>
+                          {% endif %}
+                        </select>
+                      </div>
+                      <div class="admin-field">
+                        <label>SCORE</label>
+                        <select id="admin-score-{{ mid }}" class="admin-select"
+                                {% if not both_known %}disabled{% endif %}>
+                          <option value="">— select —</option>
+                          <option value="2-0" {% if as_ == '2-0' %}selected{% endif %}>2-0</option>
+                          <option value="2-1" {% if as_ == '2-1' %}selected{% endif %}>2-1</option>
+                        </select>
+                      </div>
+                      <button class="admin-submit-btn"
+                              id="admin-submit-btn-{{ mid }}"
+                              onclick="adminSubmit('{{ mid }}','{{ t1 or '' }}','{{ t2 or '' }}')"
+                              {% if not both_known %}disabled{% endif %}>SUBMIT</button>
+                      {% if status == 'completed' %}
+                        <button class="admin-cancel-btn" onclick="toggleAdminEdit('{{ mid }}')">CANCEL</button>
+                      {% endif %}
+                    </div>
+
+                  </div>
+                </div>
+                {% endif %}
+
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+      {% endfor %}
+    </div>
+
+    {% endif %}
+  {% endfor %}
+
+</div>
+
+<!-- Toast -->
+<div id="toast" class="predict-toast"></div>
+
+<script>
+/* ── Global team logos map (shortname -> logo URL) from server ── */
+const TEAM_LOGOS = {
+  {% for shortname, info in team_logos.items() %}
+  "{{ shortname }}": "{{ info.Logo or '' }}",
+  {% endfor %}
+};
+
+function logoHTML(shortname) {
+  const url = TEAM_LOGOS[shortname] || '';
+  return url
+    ? `<img src="${url}" alt="${shortname}">`
+    : `<span>${shortname}</span>`;
+}
+
+function selectTeam(mid, team, el) {
+  const card = el.closest('.match-card');
+  if (card.dataset.status === 'completed') return;
+  card.querySelectorAll('.team-pick').forEach(t => t.classList.remove('is-picked'));
+  el.classList.add('is-picked');
+}
+
+function selectScore(mid, score, el) {
+  el.closest('.score-opts').querySelectorAll('.score-opt').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+async function submitPick(mid) {
+  const card   = document.querySelector(`[data-match-id="${mid}"]`);
+  const teamEl = card.querySelector('.team-pick.is-picked');
+  const scoreEl= card.querySelector('.score-opt.active');
+
+  if (!teamEl)  return toast('Select a winner first', 'warn');
+  if (!scoreEl) return toast('Select a score first', 'warn');
+
+  const winner = teamEl.querySelector('.team-tag').textContent.trim();
+  const score  = scoreEl.dataset.score;
+
+  try {
+    const res = await fetch('/submit_prediction', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ match_id: mid, predict_winner: winner, predict_score: score, tournament_id: '{{ current_tournament_id }}' })
+    });
+    if (res.ok) {
+      toast(`LOCKED: ${winner} ${score}`, 'ok');
+      const btn = card.querySelector('.lock-btn');
+      if (btn) btn.textContent = 'UPDATE';
+      let lbl = card.querySelector('.card-your-pick');
+      if (!lbl) {
+        lbl = document.createElement('span');
+        lbl.className = 'card-your-pick';
+        card.querySelector('.card-head').appendChild(lbl);
+      }
+      lbl.innerHTML = `YOUR PICK: <strong>${winner} ${score}</strong>`;
+    } else {
+      toast('Failed to save', 'err');
+    }
+  } catch { toast('Network error', 'err'); }
+}
+
+/* ── ADMIN: assign teams to a TBD match ── */
+async function adminAssignTeams(mid) {
+  const t1 = document.getElementById(`admin-t1-${mid}`).value;
+  const t2 = document.getElementById(`admin-t2-${mid}`).value;
+
+  if (!t1) return toast('Select Team 1', 'warn');
+  if (!t2) return toast('Select Team 2', 'warn');
+  if (t1 === t2) return toast('Teams must be different', 'warn');
+
+  const btn = document.querySelector(`#admin-form-${mid} .admin-assign-btn`);
+  btn.disabled = true;
+  btn.textContent = '...';
+
+  try {
+    const res = await fetch('/admin/update_match', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ match_id: mid, team1: t1, team2: t2, status: 'upcoming', tournament_id: '{{ current_tournament_id }}' })
+    });
+
+    if (res.ok) {
+      toast(`✓ Teams set: ${t1} vs ${t2}`, 'ok');
+
+      // Update the card teams display live
+      const card = document.querySelector(`[data-match-id="${mid}"]`);
+
+      // Replace TBD placeholder with real team display
+      const teamsDiv = card.querySelector('.card-teams');
+      teamsDiv.innerHTML = `
+        <div class="team-pick" onclick="selectTeam('${mid}','${t1}',this)">
+          <div class="team-logo-box">${logoHTML(t1)}</div>
+          <span class="team-tag">${t1}</span>
+        </div>
+        <div class="card-vs"><span>VS</span></div>
+        <div class="team-pick" onclick="selectTeam('${mid}','${t2}',this)">
+          <div class="team-logo-box">${logoHTML(t2)}</div>
+          <span class="team-tag">${t2}</span>
+        </div>
+      `;
+
+      // Update badge
+      const badge = card.querySelector('.card-badge');
+      badge.className = 'card-badge upcoming';
+      badge.textContent = 'UPCOMING';
+
+      // Show the score + lock footer
+      const adminPanel = card.querySelector('.admin-panel');
+      const newFoot = document.createElement('div');
+      newFoot.className = 'card-foot';
+      newFoot.innerHTML = `
+        <div class="score-group">
+          <span class="score-heading">SCORE</span>
+          <div class="score-opts">
+            <button class="score-opt" data-score="2-0" onclick="selectScore('${mid}','2-0',this)">2-0</button>
+            <button class="score-opt" data-score="2-1" onclick="selectScore('${mid}','2-1',this)">2-1</button>
+          </div>
+        </div>
+        <button class="lock-btn" onclick="submitPick('${mid}')">LOCK IN</button>
+      `;
+      adminPanel.before(newFoot);
+
+      // Hide assign row, update winner dropdown, enable submit
+      const assignRow = document.getElementById(`assign-row-${mid}`);
+      if (assignRow) assignRow.style.display = 'none';
+
+      const winnerSel = document.getElementById(`admin-winner-${mid}`);
+      winnerSel.disabled = false;
+      winnerSel.innerHTML = `
+        <option value="">— select —</option>
+        <option value="${t1}">${t1}</option>
+        <option value="${t2}">${t2}</option>
+      `;
+
+      document.getElementById(`admin-score-${mid}`).disabled = false;
+      document.getElementById(`admin-submit-btn-${mid}`).disabled = false;
+
+      // Update adminSubmit binding
+      document.getElementById(`admin-submit-btn-${mid}`)
+        .setAttribute('onclick', `adminSubmit('${mid}','${t1}','${t2}')`);
+
+    } else {
+      toast('Failed to assign teams', 'err');
+    }
+  } catch { toast('Network error', 'err'); }
+
+  btn.disabled = false;
+  btn.textContent = 'ASSIGN';
+}
+
+/* ── ADMIN: toggle edit on completed match ── */
+function toggleAdminEdit(mid) {
+  const form = document.getElementById(`admin-form-${mid}`);
+  const isHidden = form.style.display === 'none';
+  form.style.display = isHidden ? 'block' : 'none';
+  const btn = document.querySelector(`#admin-${mid} .admin-edit-btn`);
+  if (btn) btn.textContent = isHidden ? 'CANCEL' : 'EDIT RESULT';
+}
+
+/* ── ADMIN: submit match result ── */
+async function adminSubmit(mid, t1, t2) {
+  const winner = document.getElementById(`admin-winner-${mid}`).value;
+  const score  = document.getElementById(`admin-score-${mid}`).value;
+
+  if (!winner) return toast('Select a winner', 'warn');
+  if (!score)  return toast('Select a score', 'warn');
+
+  const btn = document.getElementById(`admin-submit-btn-${mid}`);
+  btn.disabled = true;
+  btn.textContent = '...';
+
+  try {
+    const res = await fetch('/admin/update_match', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ match_id: mid, team1: t1, team2: t2, score, winner, status: 'completed', tournament_id: '{{ current_tournament_id }}' })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      toast(err.error || 'Failed to submit result', 'err');
+      btn.disabled = false; btn.textContent = 'SUBMIT';
+      return;
+    }
+
+    if (res.ok) {
+      toast(`⚙ RESULT: ${winner} ${score}`, 'ok');
+
+      // อัปเดต card ของแมตช์ถัดไปทันที แม้มีแค่ทีมเดียว
+      try {
+        const apiRes = await fetch('/api/matches?tournament_id={{ current_tournament_id }}');
+        if (apiRes.ok) {
+          const apiData = await apiRes.json();
+          apiData.matches.forEach(m => {
+            if (m.match_id === mid) return;
+            const nextCard = document.querySelector(`[data-match-id="${m.match_id}"]`);
+            if (!nextCard) return;
+            const prev = matchState[m.match_id] || {};
+            const newT1 = m.team1 || ''; const newT2 = m.team2 || '';
+            const changed = (newT1 !== (prev.team1 || '')) || (newT2 !== (prev.team2 || ''));
+            if ((newT1 || newT2) && changed) {
+              updateTeams(nextCard, m.match_id, newT1, newT2, apiData.logos || {});
+              matchState[m.match_id] = { ...matchState[m.match_id], team1: newT1, team2: newT2 };
+              if (newT1 && newT2) {
+                const ws = document.getElementById(`admin-winner-${m.match_id}`);
+                const ss = document.getElementById(`admin-score-${m.match_id}`);
+                const sb = document.getElementById(`admin-submit-btn-${m.match_id}`);
+                if (ws) { ws.disabled = false; ws.innerHTML = `<option value="">— select —</option><option value="${newT1}">${newT1}</option><option value="${newT2}">${newT2}</option>`; }
+                if (ss) ss.disabled = false;
+                if (sb) { sb.disabled = false; sb.setAttribute('onclick', `adminSubmit('${m.match_id}','${newT1}','${newT2}')`); }
+                const ar = document.getElementById(`assign-row-${m.match_id}`);
+                if (ar) ar.style.display = 'none';
+              }
+            }
+          });
+        }
+      } catch(e) { /* silent */ }
+
+      const card = document.querySelector(`[data-match-id="${mid}"]`);
+      card.dataset.status = 'completed';
+      card.classList.remove('status-upcoming','status-live');
+      card.classList.add('status-completed');
+
+      // Badge
+      const badge = card.querySelector('.card-badge');
+      badge.className = 'card-badge done';
+      badge.textContent = '✓ DONE';
+
+      // Replace foot with result row
+      const cardFoot = card.querySelector('.card-foot');
+      if (cardFoot) cardFoot.remove();
+
+      let resultRow = card.querySelector('.card-result');
+      if (!resultRow) {
+        resultRow = document.createElement('div');
+        resultRow.className = 'card-result';
+        card.querySelector('.admin-panel').before(resultRow);
+      }
+      resultRow.innerHTML = `
+        <span class="result-label">RESULT</span>
+        <span class="result-value">${winner} · ${score}</span>
+      `;
+
+      // Highlight winning team
+      card.querySelectorAll('.team-pick').forEach(t => {
+        const tag = t.querySelector('.team-tag').textContent.trim();
+        t.classList.remove('is-winner');
+        t.classList.add('is-locked');
+        if (tag === winner) {
+          t.classList.add('is-winner');
+          if (!t.querySelector('.crown-icon')) {
+            const crown = document.createElement('span');
+            crown.className = 'crown-icon';
+            crown.textContent = '👑';
+            t.appendChild(crown);
+          }
+        }
+      });
+
+      // Hide form, show edit button
+      document.getElementById(`admin-form-${mid}`).style.display = 'none';
+      const hdr = card.querySelector('.admin-panel-header');
+      if (!hdr.querySelector('.admin-edit-btn')) {
+        const eb = document.createElement('button');
+        eb.className = 'admin-edit-btn';
+        eb.textContent = 'EDIT RESULT';
+        eb.setAttribute('onclick', `toggleAdminEdit('${mid}')`);
+        hdr.appendChild(eb);
+      } else {
+        hdr.querySelector('.admin-edit-btn').textContent = 'EDIT RESULT';
+      }
+
+    } else {
+      toast('Failed to submit result', 'err');
+    }
+  } catch { toast('Network error', 'err'); }
+
+  btn.disabled = false;
+  btn.textContent = 'SUBMIT';
+}
+
+function toast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `predict-toast show ${type}`;
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+/* ═══════════════════════════════════════════════
+   REAL-TIME POLLING — updates cards every 5s
+   without touching cards the user is interacting with
+   ═══════════════════════════════════════════════ */
+
+// Track which cards the user has open / is editing
+const userInteracting = new Set();
+
+document.addEventListener('mouseenter', e => {
+  const card = e.target.closest('.match-card');
+  if (card) userInteracting.add(card.dataset.matchId);
+}, true);
+document.addEventListener('mouseleave', e => {
+  const card = e.target.closest('.match-card');
+  if (card) setTimeout(() => userInteracting.delete(card.dataset.matchId), 3000);
+}, true);
+
+// Known state of each match (populated from server-rendered data on load)
+const matchState = {};
+document.querySelectorAll('.match-card').forEach(card => {
+  const mid = card.dataset.matchId;
+  const badge = card.querySelector('.card-badge');
+  const resultVal = card.querySelector('.result-value');
+  matchState[mid] = {
+    status: card.dataset.status,
+    winner: resultVal ? resultVal.textContent.split('·')[0].trim() : '',
+    score:  resultVal ? resultVal.textContent.split('·')[1]?.trim() : '',
+    team1:  card.querySelectorAll('.team-tag')[0]?.textContent.trim() || '',
+    team2:  card.querySelectorAll('.team-tag')[1]?.textContent.trim() || '',
+  };
+});
+
+async function pollMatches() {
+  try {
+    const res = await fetch('/api/matches?tournament_id={{ current_tournament_id }}');
+    if (!res.ok) return;
+    const data = await res.json();
+
+    data.matches.forEach(m => {
+      const mid    = m.match_id;
+      const card   = document.querySelector(`[data-match-id="${mid}"]`);
+      if (!card) return;
+
+      const prev   = matchState[mid] || {};
+      const t1     = m.team1 || '';
+      const t2     = m.team2 || '';
+      const status = m.status || 'upcoming';
+      const winner = m.winner || '';
+      const score  = m.score  || '';
+
+      // Skip if user is hovering this card
+      if (userInteracting.has(mid)) return;
+
+      // ── Teams appeared or changed (แม้จะมีแค่ทีมเดียว) ──
+      const teamsChanged = (t1 !== (prev.team1 || '')) || (t2 !== (prev.team2 || ''));
+      if ((t1 || t2) && teamsChanged) {
+        updateTeams(card, mid, t1, t2, data.logos || {});
+        matchState[mid] = { ...matchState[mid], team1: t1, team2: t2 };
+        const bothNow = t1 && t2;
+        showLiveIndicator(card, bothNow ? 'Teams updated' : `${t1 || t2} waiting for opponent`);
+        if (bothNow) {
+          const winnerSel = document.getElementById(`admin-winner-${mid}`);
+          const scoreSel  = document.getElementById(`admin-score-${mid}`);
+          const submitBtn = document.getElementById(`admin-submit-btn-${mid}`);
+          if (winnerSel && winnerSel.disabled) {
+            winnerSel.disabled = false;
+            winnerSel.innerHTML = `<option value="">— select —</option><option value="${t1}">${t1}</option><option value="${t2}">${t2}</option>`;
+          }
+          if (scoreSel)  scoreSel.disabled  = false;
+          if (submitBtn && submitBtn.disabled) {
+            submitBtn.disabled = false;
+            submitBtn.setAttribute('onclick', `adminSubmit('${mid}','${t1}','${t2}')`);
+          }
+          const assignRow = document.getElementById(`assign-row-${mid}`);
+          if (assignRow) assignRow.style.display = 'none';
+        }
+      }
+
+      // ── Match just completed ──
+      if (prev.status !== 'completed' && status === 'completed' && winner) {
+        markCompleted(card, mid, t1, t2, winner, score, data.user_predictions);
+        matchState[mid] = { status: 'completed', winner, score, team1: t1, team2: t2 };
+        showLiveIndicator(card, `Result: ${winner} ${score}`);
+      }
+
+      // ── Result was edited ──
+      if (prev.status === 'completed' && status === 'completed'
+          && (prev.winner !== winner || prev.score !== score) && winner) {
+        updateResult(card, winner, score, data.user_predictions[mid]);
+        matchState[mid] = { ...matchState[mid], winner, score };
+      }
+
+      // ── Match went live ──
+      if (prev.status !== 'live' && status === 'live') {
+        const badge = card.querySelector('.card-badge');
+        badge.className = 'card-badge live';
+        badge.textContent = '● LIVE';
+        card.dataset.status = 'live';
+        card.classList.remove('status-upcoming','status-completed');
+        card.classList.add('status-live');
+        matchState[mid].status = 'live';
+        showLiveIndicator(card, 'Match is LIVE');
+      }
+    });
+
+  } catch (e) {
+    // silently ignore — don't disrupt the user
+  }
+}
+
+function updateTeams(card, mid, t1, t2, logos) {
+  const teamsDiv = card.querySelector('.card-teams');
+  const bothKnown = t1 && t2;
+
+  function getLogoHTML(shortname) {
+    const url = TEAM_LOGOS[shortname] || logos[shortname] || '';
+    return url ? `<img src="${url}" alt="${shortname}">` : `<span>${shortname}</span>`;
+  }
+
+  function tbdSlot() {
+    return `<div class="tbd-slot-inline">
+      <div class="team-logo-box" style="background:#111;border:1px dashed #333;border-radius:8px;width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#444;">?</div>
+      <span class="team-tag" style="color:#555;">TBD</span>
+    </div>`;
+  }
+
+  if (bothKnown) {
+    teamsDiv.innerHTML = `
+      <div class="team-pick" onclick="selectTeam('${mid}','${t1}',this)">
+        <div class="team-logo-box">${getLogoHTML(t1)}</div>
+        <span class="team-tag">${t1}</span>
+      </div>
+      <div class="card-vs"><span>VS</span></div>
+      <div class="team-pick" onclick="selectTeam('${mid}','${t2}',this)">
+        <div class="team-logo-box">${getLogoHTML(t2)}</div>
+        <span class="team-tag">${t2}</span>
+      </div>
+    `;
+    // LOCK IN footer เฉพาะตอนมีครบ 2 ทีม
+    if (!card.querySelector('.card-foot')) {
+      const adminPanel = card.querySelector('.admin-panel');
+      const foot = document.createElement('div');
+      foot.className = 'card-foot';
+      foot.innerHTML = `
+        <div class="score-group">
+          <span class="score-heading">SCORE</span>
+          <div class="score-opts">
+            <button class="score-opt" data-score="2-0" onclick="selectScore('${mid}','2-0',this)">2-0</button>
+            <button class="score-opt" data-score="2-1" onclick="selectScore('${mid}','2-1',this)">2-1</button>
+          </div>
+        </div>
+        <button class="lock-btn" onclick="submitPick('${mid}')">LOCK IN</button>
+      `;
+      if (adminPanel) adminPanel.before(foot);
+      else card.appendChild(foot);
+    }
+    const badge = card.querySelector('.card-badge');
+    badge.className = 'card-badge upcoming';
+    badge.textContent = 'UPCOMING';
+  } else {
+    // มีทีมเดียว — แสดงทีมที่มีพร้อม TBD อีกฝั่ง
+    const slot1 = t1
+      ? `<div class="team-pick is-locked"><div class="team-logo-box">${getLogoHTML(t1)}</div><span class="team-tag">${t1}</span></div>`
+      : tbdSlot();
+    const slot2 = t2
+      ? `<div class="team-pick is-locked"><div class="team-logo-box">${getLogoHTML(t2)}</div><span class="team-tag">${t2}</span></div>`
+      : tbdSlot();
+    teamsDiv.innerHTML = `
+      ${slot1}
+      <div class="card-vs"><span>VS</span></div>
+      ${slot2}
+      <p style="width:100%;text-align:center;font-size:11px;color:#444;margin-top:8px;letter-spacing:0.05em;">Waiting for opponent...</p>
+    `;
+  }
+}
+
+function markCompleted(card, mid, t1, t2, winner, score, userPreds) {
+  card.dataset.status = 'completed';
+  card.classList.remove('status-upcoming', 'status-live');
+  card.classList.add('status-completed');
+
+  // Badge
+  const badge = card.querySelector('.card-badge');
+  badge.className = 'card-badge done';
+  badge.textContent = '✓ DONE';
+
+  // Lock team boxes + highlight winner
+  card.querySelectorAll('.team-pick').forEach(t => {
+    const tag = t.querySelector('.team-tag')?.textContent.trim();
+    t.classList.add('is-locked');
+    if (tag === winner) {
+      t.classList.add('is-winner');
+      if (!t.querySelector('.crown-icon')) {
+        const crown = document.createElement('span');
+        crown.className = 'crown-icon';
+        crown.textContent = '👑';
+        t.appendChild(crown);
+      }
+    }
+  });
+
+  // Remove score/lock footer
+  card.querySelector('.card-foot')?.remove();
+
+  // Add result row
+  const pred = userPreds ? userPreds[mid] : null;
+  let correctHtml = '';
+  if (pred) {
+    if (pred.Predict_Winner === winner) {
+      correctHtml = `<span class="result-correct">✓ CORRECT${pred.Predict_Score === score ? ' +SCORE' : ''}</span>`;
+    } else {
+      correctHtml = `<span class="result-wrong">✗ WRONG</span>`;
+    }
+  }
+
+  let resultRow = card.querySelector('.card-result');
+  if (!resultRow) {
+    resultRow = document.createElement('div');
+    resultRow.className = 'card-result';
+    const adminPanel = card.querySelector('.admin-panel');
+    if (adminPanel) adminPanel.before(resultRow);
+    else card.appendChild(resultRow);
+  }
+  resultRow.innerHTML = `
+    <span class="result-label">RESULT</span>
+    <span class="result-value">${winner} · ${score}</span>
+    ${correctHtml}
+  `;
+}
+
+function updateResult(card, winner, score, pred) {
+  const resultRow = card.querySelector('.card-result');
+  if (!resultRow) return;
+  let correctHtml = '';
+  if (pred) {
+    if (pred.Predict_Winner === winner) {
+      correctHtml = `<span class="result-correct">✓ CORRECT${pred.Predict_Score === score ? ' +SCORE' : ''}</span>`;
+    } else {
+      correctHtml = `<span class="result-wrong">✗ WRONG</span>`;
+    }
+  }
+  resultRow.innerHTML = `
+    <span class="result-label">RESULT</span>
+    <span class="result-value">${winner} · ${score}</span>
+    ${correctHtml}
+  `;
+}
+
+function showLiveIndicator(card, msg) {
+  // Flash a subtle pulse on the card border
+  card.classList.add('just-updated');
+  setTimeout(() => card.classList.remove('just-updated'), 2000);
+  toast(`↻ ${msg}`, 'ok');
+}
+
+// Start polling every 5 seconds
+setInterval(pollMatches, 5000);
+
+// Live indicator dot in navbar
+const liveIndicator = document.getElementById('live-indicator');
+setInterval(() => {
+  if (liveIndicator) liveIndicator.classList.toggle('pulse');
+}, 1000);
+</script>
+</body>
+</html>

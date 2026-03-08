@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard – PICK'EM</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="/static/leaderboard.css">
+
+<style>
+.tournament-selector {
+  display: flex; align-items: center; gap: 8px;
+  margin-right: 4px;
+}
+.t-sel-label {
+  font-size: 0.58rem; letter-spacing: 0.18em; color: #444; font-weight: 700;
+}
+.t-sel-dropdown { position: relative; }
+.t-sel-btn {
+  background: #1a0000; border: 1px solid #330000; color: rgba(255,255,255,0.8);
+  font-family: 'Inter', sans-serif; font-size: 0.78rem; font-weight: 600;
+  padding: 5px 12px; cursor: pointer; display: flex; align-items: center; gap: 6px;
+  white-space: nowrap; transition: border-color 0.2s;
+}
+.t-sel-btn:hover { border-color: #ff2a2a; }
+.t-sel-menu {
+  display: none; position: absolute; top: 100%; right: 0;
+  background: #0f0000; border: 1px solid #330000;
+  min-width: 180px; z-index: 200; margin-top: 4px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+}
+.t-sel-dropdown.open .t-sel-menu { display: block; }
+.t-sel-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 14px; font-size: 0.78rem; color: rgba(255,255,255,0.7);
+  text-decoration: none; transition: background 0.15s;
+  border-bottom: 1px solid #1a0000;
+}
+.t-sel-item:hover  { background: #1a0000; color: white; }
+.t-sel-item.active { color: #ff2a2a; font-weight: 700; }
+.t-dot { width: 6px; height: 6px; border-radius: 50%; background: #333; flex-shrink: 0; }
+.t-dot.green { background: #00cc66; box-shadow: 0 0 6px #00cc66; }
+</style>
+
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="logo">PICK'EM</div>
+  <div class="nav-links">
+    <a href="/tournaments">Tournament</a>
+    <a href="/predict">Predict</a>
+    <a href="/matches">Bracket</a>
+    <a href="/leaderboard" class="active">Leaderboard</a>
+    <a href="/teams">Teams</a>
+    {% if logged_in %}
+      {% if is_admin %}
+      <a href="/admin/tournaments" style="color:#00ff99;font-weight:bold;font-size:0.75rem;">⚙ MANAGE</a>
+        <a href="/user/{{ session['username'] }}" class="nav-admin" style="text-decoration:none;color:#00ff99;font-weight:bold;">⚙ {{ session['username'] }}</a>
+      {% else %}
+        <a href="/user/{{ session['username'] }}" style="text-decoration:none;color:white;">{{ session['username'] }}</a>
+      {% endif %}
+      <span onclick="location.href='/logout'">Log out</span>
+    {% else %}
+      <span onclick="location.href='/login'">Log in</span>
+    {% endif %}
+  </div>
+</nav>
+
+<!-- PAGE HEADER -->
+<div class="lb-header">
+    <div class="lb-title-wrap">
+        <h1 class="lb-title">LEADERBOARD</h1>
+        <p class="lb-subtitle">TOP PREDICTORS THIS SEASON</p>
+    </div>
+    <div class="lb-season-badge">{{ tournament.name }}</div>
+</div>
+
+<!-- TOP 3 PODIUM -->
+<div class="podium-section">
+    {% if leaderboard|length >= 2 %}
+    <div class="podium-card rank-2">
+        <div class="podium-rank">#2</div>
+        <div class="podium-avatar">{{ leaderboard[1].Username[0] | upper }}</div>
+        <div class="podium-name">{{ leaderboard[1].Username }}</div>
+        <div class="podium-score">{{ leaderboard[1].Score }} <span>PTS</span></div>
+        <div class="podium-block p2"></div>
+    </div>
+    {% endif %}
+
+    {% if leaderboard|length >= 1 %}
+    <div class="podium-card rank-1">
+        <div class="crown">♛</div>
+        <div class="podium-rank">#1</div>
+        <div class="podium-avatar gold">{{ leaderboard[0].Username[0] | upper }}</div>
+        <div class="podium-name">{{ leaderboard[0].Username }}</div>
+        <div class="podium-score">{{ leaderboard[0].Score }} <span>PTS</span></div>
+        <div class="podium-block p1"></div>
+    </div>
+    {% endif %}
+
+    {% if leaderboard|length >= 3 %}
+    <div class="podium-card rank-3">
+        <div class="podium-rank">#3</div>
+        <div class="podium-avatar bronze">{{ leaderboard[2].Username[0] | upper }}</div>
+        <div class="podium-name">{{ leaderboard[2].Username }}</div>
+        <div class="podium-score">{{ leaderboard[2].Score }} <span>PTS</span></div>
+        <div class="podium-block p3"></div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- FULL RANKINGS TABLE -->
+<div class="lb-table-section">
+    <div class="lb-table-header">
+        <span>RANK</span>
+        <span>AGENT</span>
+        <span>CORRECT PICKS</span>
+        <span>SCORE</span>
+    </div>
+
+    {% for entry in leaderboard %}
+    <div class="lb-row {% if loop.index <= 3 %}top-three{% endif %} {% if entry.Username == username %}is-you{% endif %}"
+         style="animation-delay: {{ loop.index * 0.05 }}s">
+        <span class="rank-num">
+            {% if loop.index == 1 %}
+                <span class="medal gold-m">🥇</span>
+            {% elif loop.index == 2 %}
+                <span class="medal">🥈</span>
+            {% elif loop.index == 3 %}
+                <span class="medal">🥉</span>
+            {% else %}
+                {{ loop.index }}
+            {% endif %}
+        </span>
+        <span class="lb-username">
+            {{ entry.Username }}
+            {% if entry.Username == username %}
+                <span class="you-tag">YOU</span>
+            {% endif %}
+        </span>
+        <span class="lb-correct">{{ entry.CorrectPicks }}</span>
+        <span class="lb-score">{{ entry.Score }} <span class="pts">PTS</span></span>
+    </div>
+    {% else %}
+    <div class="lb-empty">No predictions submitted yet. Be the first!</div>
+    {% endfor %}
+</div>
+
+<!-- YOUR RANK STICKY FOOTER (only if logged in and not in top view) -->
+{% if logged_in and user_rank %}
+<div class="your-rank-bar">
+    <span class="yr-label">YOUR RANK</span>
+    <span class="yr-rank">#{{ user_rank }}</span>
+    <span class="yr-name">{{ username }}</span>
+    <span class="yr-score">{{ user_score }} PTS</span>
+</div>
+{% endif %}
+
+</body>
+</html>
