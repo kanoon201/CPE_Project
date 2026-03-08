@@ -27,18 +27,18 @@ project/
 │   ├── requirements.txt
 │   └── pickem_database.sql   # MySQL Schema + Seed data
 ├── frontend/
-   ├── template/
-   │   ├── index.html        # Landing page
-   │   ├── tournaments.html  # หน้าเลือกทัวร์นาเมนต์
-   │   ├── predict.html      # หน้าทายผล
-   │   ├── matches.html      # Bracket viewer
-   │   ├── teams.html        # สถิติทีม
-   │   ├── leaderboard.html  # อันดับคะแนน
-   │   ├── user_profile.html # โปรไฟล์ผู้ใช้
-   │   ├── admin_tournaments.html
-   │   ├── login.html
-   │   └── register.html
-   └── static/
+    ├── template/
+    │   ├── index.html        # Landing page
+    │   ├── tournaments.html  # หน้าเลือกทัวร์นาเมนต์
+    │   ├── predict.html      # หน้าทายผล
+    │   ├── matches.html      # Bracket viewer
+    │   ├── teams.html        # สถิติทีม
+    │   ├── leaderboard.html  # อันดับคะแนน
+    │   ├── user_profile.html # โปรไฟล์ผู้ใช้
+    │   ├── admin_tournaments.html
+    │   ├── login.html
+    │   └── register.html
+    └── static/
         ├── styles.css          # Global styles + Navbar + Match cards
         ├── landing.css         # Landing page / Hero section
         ├── login-page.css      # Login & Register page
