@@ -24,29 +24,28 @@ project/
 │   ├── app.py                # Flask application หลัก
 │   ├── db.py                 # MySQL & MongoDB connection
 │   ├── seed_bracket.py       # สร้าง Bracket เริ่มต้น
-│   └── requirements.txt
+│   ├── requirements.txt
+│   └── pickem_database.sql   # MySQL Schema + Seed data
 ├── frontend/
-│   ├── template/
-│   │   ├── index.html        # Landing page
-│   │   ├── tournaments.html  # หน้าเลือกทัวร์นาเมนต์
-│   │   ├── predict.html      # หน้าทายผล
-│   │   ├── matches.html      # Bracket viewer
-│   │   ├── teams.html        # สถิติทีม
-│   │   ├── leaderboard.html  # อันดับคะแนน
-│   │   ├── user_profile.html # โปรไฟล์ผู้ใช้
-│   │   ├── admin_tournaments.html
-│   │   ├── login.html
-│   │   └── register.html
-│   └── static/
-│       ├── styles.css          # Global styles + Navbar + Match cards
-│       ├── landing.css         # Landing page / Hero section
-│       ├── login-page.css      # Login & Register page
-│       ├── predict.css         # หน้าทายผล + Admin panel
-│       ├── bracket_styles.css  # Bracket viewer (matches.html)
-│       ├── leaderboard.css     # Leaderboard + Podium
-│       └── teams.css           # Teams standings table
-└── database/
-    └── pickem_database.sql   # MySQL Schema + Seed data
+    ├── template/
+    │   ├── index.html        # Landing page
+    │   ├── tournaments.html  # หน้าเลือกทัวร์นาเมนต์
+    │   ├── predict.html      # หน้าทายผล
+    │   ├── matches.html      # Bracket viewer
+    │   ├── teams.html        # สถิติทีม
+    │   ├── leaderboard.html  # อันดับคะแนน
+    │   ├── user_profile.html # โปรไฟล์ผู้ใช้
+    │   ├── admin_tournaments.html
+    │   ├── login.html
+    │   └── register.html
+    └── static/
+        ├── styles.css          # Global styles + Navbar + Match cards
+        ├── landing.css         # Landing page / Hero section
+        ├── login-page.css      # Login & Register page
+        ├── predict.css         # หน้าทายผล + Admin panel
+        ├── bracket_styles.css  # Bracket viewer (matches.html)
+        ├── leaderboard.css     # Leaderboard + Podium
+        └── teams.css           # Teams standings table
 ```
 
 ## การติดตั้งและรันโปรเจกต์
