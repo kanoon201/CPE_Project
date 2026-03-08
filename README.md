@@ -1,6 +1,6 @@
-# PICK'EM — Valorant Esports Prediction
+# Esports Pick’em Tournament with Real-time Ranking
 
-ระบบเว็บแอปพลิเคชันสำหรับทายผลการแข่งขัน Valorant Esports แบบ Double Elimination Bracket ผู้ใช้สามารถทายผลแมตช์, ดูอันดับคะแนน, และติดตามสถิติทีมได้แบบ Real-time
+ระบบเว็บแอปพลิเคชันสำหรับทายผลการแข่งขัน Esports แบบ Double Elimination Bracket ผู้ใช้สามารถทายผลแมตช์, ดูอันดับคะแนน, และติดตามสถิติทีมได้แบบ Real-time
 
 ---
 
