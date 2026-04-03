@@ -1,10 +1,5 @@
 # สำหรับวิชา Practicum 
-ก่อนจะรัน deploy ให้ใช่คำสั่ง : python run_sql.py 
-ใน /backend ก่อนนะครับเพื่อสร้าง table ใน database ก่อนที่จะรันเว็บ 
-ไม่เช่นนั้นจะไม่สามารถ login ได้เนื่องจากระบบไม่เห็น table ต่างๆที่ต้องการใน database 
-ขอบคุณครับ
-
-ปล. ที่ dir frontend หายไป เนื่องจากย้ายไฟล์ทั้งหมดจาก /frontend --> /backend เพื่อให้สามารถทำ deplyment บน clound run ได้ครับ
+ที่ dir frontend หายไป เนื่องจากย้ายไฟล์ทั้งหมดจาก /frontend --> /backend เพื่อให้สามารถทำ deplyment บน clound run ได้ครับ
 
 # Esports Pick’em Tournament with Real-time Ranking
 
