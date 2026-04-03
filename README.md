@@ -4,6 +4,8 @@
 ไม่เช่นนั้นจะไม่สามารถ login ได้เนื่องจากระบบไม่เห็น table ต่างๆที่ต้องการใน database 
 ขอบคุณครับ
 
+ปล. ที่ dir frontend หายไป เนื่องจากย้ายไฟล์ทั้งหมดจาก /frontend --> /backend เพื่อให้สามารถทำ deplyment บน clound run ได้ครับ
+
 # Esports Pick’em Tournament with Real-time Ranking
 
 ระบบเว็บแอปพลิเคชันสำหรับทายผลการแข่งขัน Esports แบบ Double Elimination Bracket ผู้ใช้สามารถทายผลแมตช์, ดูอันดับคะแนน, และติดตามสถิติทีมได้แบบ Real-time
