@@ -4,12 +4,26 @@ from seed_bracket import seed_bracket, create_tournament_bracket
 import mysql.connector
 from datetime import datetime
 
-app = Flask(
-    __name__,
-    template_folder="../frontend/template",
-    static_folder="../frontend/static"
+import os
+
+try:
+    from local_config import MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, \
+                             MYSQL_DATABASE, MYSQL_PORT, MONGO_URI, MONGO_DB
+except ImportError:
+    MYSQL_HOST     = os.environ.get("MYSQL_HOST",     "localhost")
+    MYSQL_USER     = os.environ.get("MYSQL_USER",     "root")
+    MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD", "root")
+    MYSQL_DATABASE = os.environ.get("MYSQL_DATABASE", "pickem_db")
+    MYSQL_PORT     = int(os.environ.get("MYSQL_PORT", 3306))
+    MONGO_URI      = os.environ.get("MONGO_URI",      "mongodb://localhost:27017")
+    MONGO_DB       = os.environ.get("MONGO_DB",       "pickem_db")
+
+
+app = Flask(__name__,
+    template_folder="template",
+    static_folder="static"
 )
-app.secret_key = 'your_super_secret_key_here'
+app.secret_key = os.environ.get('SECRET_KEY', 'your_super_secret_key_here')
 
 # ─────────────────────────────────────────────
 # HELPERS
@@ -773,4 +787,5 @@ def results_page():
 
 if __name__ == '__main__':
     seed_bracket()
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port, debug=False)

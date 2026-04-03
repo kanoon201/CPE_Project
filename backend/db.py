@@ -3,21 +3,30 @@ import mysql.connector
 from mysql.connector import Error
 from pymongo import MongoClient
 
+# โหลด config จาก local_config.py ถ้ามี
+try:
+    from local_config import MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, \
+                             MYSQL_DATABASE, MYSQL_PORT, MONGO_URI, MONGO_DB
+except ImportError:
+    MYSQL_HOST     = os.getenv("MYSQL_HOST",     "localhost")
+    MYSQL_USER     = os.getenv("MYSQL_USER",     "root")
+    MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "root")
+    MYSQL_DATABASE = os.getenv("MYSQL_DATABASE", "pickem_db")
+    MYSQL_PORT     = int(os.getenv("MYSQL_PORT", 3306))
+    MONGO_URI      = os.getenv("MONGO_URI",      "mongodb://localhost:27017")
+    MONGO_DB       = os.getenv("MONGO_DB",       "pickem_db")
 
 
-# MySQL Connection
-# Note: In a production environment, consider using connection pooling for better performance.
-#query = "SELECT * FROM User"
 def get_mysql_connection():
     try:
         connection = mysql.connector.connect(
-            host=os.getenv("MYSQL_HOST", "localhost"),
-            user=os.getenv("MYSQL_USER", "root"),
-            password=os.getenv("MYSQL_PASSWORD", "root"),
-            database=os.getenv("MYSQL_DATABASE", "pickem_db"),
-            port=int(os.getenv("MYSQL_PORT", 3306))
+            host=MYSQL_HOST,
+            user=MYSQL_USER,
+            password=MYSQL_PASSWORD,
+            database=MYSQL_DATABASE,
+            port=int(MYSQL_PORT)
         )
-        return connection 
+        return connection
     except mysql.connector.Error as err:
         print(f"Error connecting to MySQL: {err}")
         return None
@@ -25,17 +34,10 @@ def get_mysql_connection():
 
 def get_mongo_collection(collection_name):
     try:
-        uri = os.getenv("MONGO_URI", "mongodb://localhost:27017")
-        db_name = os.getenv("MONGO_DB", "pickem_db")
-
-        client = MongoClient(uri)
-
-        db = client[db_name]
-
+        client = MongoClient(MONGO_URI)
+        db = client[MONGO_DB]
         print("Using Mongo collection:", collection_name)
-
-        return db["tournaments"]
-
+        return db[collection_name]  # ← แก้จาก db["tournaments"]
     except Exception as e:
         print(f"MongoDB connection error: {e}")
         return None
